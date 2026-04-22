@@ -1,4 +1,4 @@
-package com.example.wchat.data
+package com.example.wchat.data.repository
 
 import com.example.wchat.model.Grupo
 import com.example.wchat.model.Segmento
@@ -6,7 +6,6 @@ import com.example.wchat.model.TipoChat
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-
 
 class NotificacaoRepository {
     private val usuarioAtualId = Firebase.auth.currentUser?.uid ?: ""

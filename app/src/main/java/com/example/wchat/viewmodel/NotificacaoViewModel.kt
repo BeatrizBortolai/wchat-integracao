@@ -5,10 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.GrupoRepository
-import com.example.wchat.data.NotificacaoRepository
-import com.example.wchat.data.SegmentoRepository
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.GrupoRepository
+import com.example.wchat.data.repository.NotificacaoRepository
+import com.example.wchat.data.repository.SegmentoRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.Grupo
 import com.example.wchat.model.Notificacao
 import com.example.wchat.model.Segmento

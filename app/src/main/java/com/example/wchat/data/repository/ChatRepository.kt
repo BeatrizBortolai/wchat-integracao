@@ -1,4 +1,4 @@
-package com.example.wchat.data
+package com.example.wchat.data.repository
 
 import androidx.annotation.OptIn
 import androidx.media3.common.util.Log
@@ -17,8 +17,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlin.io.path.name
-
 
 class ChatRepository(
     private val tipoChat: TipoChat,

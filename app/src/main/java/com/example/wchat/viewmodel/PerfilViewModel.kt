@@ -3,7 +3,7 @@ package com.example.wchat.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.Usuario
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

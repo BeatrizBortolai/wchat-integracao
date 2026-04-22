@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.TipoGrupo
 import com.example.wchat.model.TipoSegmento
 import com.example.wchat.model.TipoUsuario

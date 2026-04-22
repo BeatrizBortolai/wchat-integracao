@@ -1,4 +1,4 @@
-package com.example.wchat.data
+package com.example.wchat.data.repository
 
 import com.example.wchat.model.Grupo
 import com.example.wchat.model.TipoGrupo

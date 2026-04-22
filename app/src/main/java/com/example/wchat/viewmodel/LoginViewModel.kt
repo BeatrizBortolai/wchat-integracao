@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase

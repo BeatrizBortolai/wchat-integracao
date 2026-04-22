@@ -3,7 +3,7 @@ package com.example.wchat.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth

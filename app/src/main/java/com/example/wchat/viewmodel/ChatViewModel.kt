@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.ChatRepository
+import com.example.wchat.data.repository.ChatRepository
 import com.example.wchat.model.Mensagem
 import com.example.wchat.model.TipoChat
 import com.google.firebase.Firebase

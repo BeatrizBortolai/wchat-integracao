@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.example.wchat.data.SegmentoRepository
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.SegmentoRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.Segmento
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

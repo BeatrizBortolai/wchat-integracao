@@ -1,13 +1,13 @@
-package com.example.wchat.data
+package com.example.wchat.data.repository
 
 import com.example.wchat.model.Segmento
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.channels.awaitClose
 
 class SegmentoRepository {
     private val segmentosCollection = Firebase.firestore.collection("segmentos")

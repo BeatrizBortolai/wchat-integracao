@@ -2,8 +2,8 @@ package com.example.wchat.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.GrupoRepository
-import com.example.wchat.data.UsuarioRepository
+import com.example.wchat.data.repository.GrupoRepository
+import com.example.wchat.data.repository.UsuarioRepository
 import com.example.wchat.model.Grupo
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

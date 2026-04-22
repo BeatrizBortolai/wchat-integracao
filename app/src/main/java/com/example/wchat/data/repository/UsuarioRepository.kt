@@ -1,9 +1,11 @@
-package com.example.wchat.data
+package com.example.wchat.data.repository
 
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,7 +15,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class UsuarioRepository {
-    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val usuariosCollection = db.collection("usuarios")
 
@@ -213,7 +215,7 @@ class UsuarioRepository {
 
             Result.success(Unit) // Retorna sucesso
 
-        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
             Result.failure(Exception("Senha atual incorreta. Tente novamente."))
         } catch (e: Exception) {
             Result.failure(Exception("Falha ao deletar conta: ${e.localizedMessage}"))
