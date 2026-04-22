@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">WChat</string>
+
+    <string name="login">Login</string>
+    <string name="signin">Sign in</string>
+    <string name="subtitle">Please, provide your information</string>
+    <string name="email">Enter your e-mail</string>
+    <string name="password">Enter your password</string>
+    <string name="enter">Enter</string>
+    <string name="back">Back</string>
+
+</resources>

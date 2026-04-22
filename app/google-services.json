@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "75018868993",
+    "project_id": "wchat-4d032",
+    "storage_bucket": "wchat-4d032.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75018868993:android:0eb710717cb5ef5514a300",
+        "android_client_info": {
+          "package_name": "com.example.wchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVE-oixWW8QFq9EH5zmUvEFQXYYYfQO-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
