@@ -162,7 +162,7 @@ fun Login(navController: NavController, tipoUsuario: TipoUsuario) {
                         Spacer(modifier = Modifier.height(32.dp))
 
                         Button(
-                            onClick = { viewModel.login(tipoUsuario) },
+                            onClick = { viewModel.login(tipoUsuario, context) },
                             enabled = !uiState.isLoading,
                             colors = ButtonDefaults.buttonColors(corPrincipal),
                             modifier = Modifier.fillMaxWidth()

@@ -241,7 +241,7 @@ fun Cadastro(navController: NavController, tipoUsuario: TipoUsuario) {
                         }
 
                         Button(
-                            onClick = { viewModel.registrar(tipoUsuario) },
+                            onClick = { viewModel.registrar(tipoUsuario, context) },
                             colors = ButtonDefaults.buttonColors(corPrincipal),
                             enabled = !uiState.isLoading,
                             modifier = Modifier.fillMaxWidth()

@@ -69,13 +69,16 @@ class CadastroViewModel : ViewModel() {
         uiState = uiState.copy(segmentosSelecionados = novaLista)
     }
 
-    fun registrar(tipoUsuario: TipoUsuario) {
+    fun registrar(tipoUsuario: TipoUsuario, context: android.content.Context) {
         viewModelScope.launch {
             if (!validarCampos(tipoUsuario)) return@launch
 
             uiState = uiState.copy(isLoading = true)
 
-            val resultado = UsuarioRepository().registrarUsuario(
+            val usuarioRepository = UsuarioRepository()
+            val authIntegrationRepository = com.example.wchat.data.repository.AuthIntegrationRepository(context)
+
+            val resultado = usuarioRepository.registrarUsuario(
                 nome = uiState.nome,
                 email = uiState.email,
                 password = uiState.senha,
@@ -84,12 +87,33 @@ class CadastroViewModel : ViewModel() {
                 segmentos = uiState.segmentosSelecionados.map { it.name }
             )
 
-            uiState = uiState.copy(isLoading = false)
-
             resultado.onSuccess {
-                _evento.emit(CadastroEvento.Sucesso("Cadastro realizado!"))
+                val syncResult = authIntegrationRepository.syncAuthenticatedFirebaseUser(
+                    nome = uiState.nome,
+                    email = uiState.email,
+                    password = uiState.senha,
+                    tipo = tipoUsuario.name,
+                    cargo = uiState.grupoSelecionado?.name,
+                    segmentos = uiState.segmentosSelecionados.map { it.name }
+                )
+
+                if (syncResult.isSuccess) {
+                    authIntegrationRepository.sendFcmTokenToBackend()
+                    uiState = uiState.copy(isLoading = false)
+                    _evento.emit(CadastroEvento.Sucesso("Cadastro realizado!"))
+                } else {
+                    uiState = uiState.copy(isLoading = false)
+                    _evento.emit(
+                        CadastroEvento.Erro(
+                            syncResult.exceptionOrNull()?.message
+                                ?: "Cadastro feito, mas falhou ao sincronizar com o backend."
+                        )
+                    )
+                }
             }
+
             resultado.onFailure { exception ->
+                uiState = uiState.copy(isLoading = false)
                 _evento.emit(CadastroEvento.Erro(exception.message ?: "Falha desconhecida no cadastro"))
             }
         }
