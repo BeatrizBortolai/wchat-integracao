@@ -53,7 +53,8 @@ class AuthIntegrationRepository(
                 sessionManager.saveBackendUserId(authSession.usuarioId)
                 Result.success(authSession)
             } else {
-                Result.failure(Exception("Erro ao sincronizar usuário com backend: ${response.code()}"))
+                val errorBody = response.errorBody()?.string()
+                Result.failure(Exception("Erro ao sincronizar usuário com backend: ${response.code()} - $errorBody"))
             }
         } catch (e: Exception) {
             Result.failure(e)
