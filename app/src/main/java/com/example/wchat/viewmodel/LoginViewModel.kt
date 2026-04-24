@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import android.content.Context
 import com.example.wchat.data.repository.AuthIntegrationRepository
+import com.example.wchat.data.repository.UsuarioApiRepository
 
 data class LoginUiState(
     val email: String = "",
@@ -69,7 +70,21 @@ class LoginViewModel : ViewModel() {
                     )
 
                     if (syncResult.isSuccess) {
+                        val authSession = syncResult.getOrThrow()
+
                         authIntegrationRepository.sendFcmTokenToBackend()
+
+                        val usuarioApiRepository = UsuarioApiRepository(context)
+                        val usuarioBackend = usuarioApiRepository.buscarPorId(authSession.usuarioId)
+
+                        usuarioBackend.onSuccess {
+                            android.util.Log.d("USUARIO_API", "Usuário backend: $it")
+                        }
+
+                        usuarioBackend.onFailure {
+                            android.util.Log.e("USUARIO_API", "Erro usuário backend: ${it.message}")
+                        }
+
                         uiState = uiState.copy(isLoading = false)
                         _evento.emit(LoginEvento.Sucesso(usuarioLogado))
                     } else {
