@@ -137,7 +137,9 @@ private fun ConteudoEditarPerfil(
     usuario: Usuario,
     modifier: Modifier = Modifier,
     viewModel: EditarPerfilViewModel
+
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var nome by remember(usuario.nome) { mutableStateOf(usuario.nome) }
     var email by remember(usuario.email) { mutableStateOf(usuario.email) }
     var mostrarDialogoNovaSenha by remember { mutableStateOf(false) }
@@ -157,7 +159,7 @@ private fun ConteudoEditarPerfil(
         ReautenticacaoDialog(
             onConfirm = { senhaAtual ->
                 mostrarDialogoExcluirConta = false
-                viewModel.deletarConta(senhaAtual)
+                viewModel.deletarConta(senhaAtual, context)
             },
             onDismiss = { mostrarDialogoExcluirConta = false }
         )
