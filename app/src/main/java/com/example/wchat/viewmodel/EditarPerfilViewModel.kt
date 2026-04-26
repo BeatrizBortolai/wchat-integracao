@@ -69,17 +69,42 @@ class EditarPerfilViewModel(
         }
     }
 
-    fun deletarConta(senhaAtual: String) {
+    fun deletarConta(senhaAtual: String, context: android.content.Context) {
         if (senhaAtual.isBlank()) {
             _updateStatus.value = UpdateStatus.ERROR
             return
         }
 
         viewModelScope.launch {
-            val resultado = usuarioRepository.deletarUsuario(senhaAtual)
-            if (resultado.isSuccess) {
+            val usuarioId = Firebase.auth.currentUser?.uid
+
+            if (usuarioId.isNullOrBlank()) {
+                _updateStatus.value = UpdateStatus.ERROR
+                return@launch
+            }
+
+            val deleteBackendResult =
+                com.example.wchat.data.repository.UsuarioApiRepository(context)
+                    .deletarUsuario(usuarioId)
+
+            if (deleteBackendResult.isFailure) {
+                android.util.Log.e(
+                    "DELETE_USUARIO",
+                    "Erro ao deletar no backend: ${deleteBackendResult.exceptionOrNull()?.message}"
+                )
+                _updateStatus.value = UpdateStatus.ERROR
+                return@launch
+            }
+
+            val deleteFirebaseResult = usuarioRepository.deletarUsuario(senhaAtual)
+
+            if (deleteFirebaseResult.isSuccess) {
                 _updateStatus.value = UpdateStatus.SUCCESS
             } else {
+                android.util.Log.e(
+                    "DELETE_USUARIO",
+                    "Erro ao deletar no Firebase: ${deleteFirebaseResult.exceptionOrNull()?.message}"
+                )
                 _updateStatus.value = UpdateStatus.ERROR
             }
         }
