@@ -7,6 +7,7 @@ import com.example.wchat.data.remote.dto.UsuarioResponseDto
 import com.example.wchat.data.remote.dto.UsuarioUpdateRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -40,4 +41,9 @@ interface WChatApi {
         @Path("id") id: String,
         @Body request: UsuarioUpdateRequestDto
     ): Response<UsuarioResponseDto>
+
+    @DELETE("usuarios/{id}")
+    suspend fun deletarUsuario(
+        @Path("id") id: String
+    ): Response<Unit>
 }

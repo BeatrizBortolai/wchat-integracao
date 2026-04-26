@@ -65,4 +65,20 @@ class UsuarioApiRepository(context: Context) {
             Result.failure(e)
         }
     }
+
+    suspend fun deletarUsuario(id: String): Result<Unit> {
+        return try {
+            val response = api.deletarUsuario(id)
+
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    Exception("Erro ao deletar usuário: ${response.code()} - ${response.errorBody()?.string()}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
