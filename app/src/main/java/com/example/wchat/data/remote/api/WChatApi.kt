@@ -13,6 +13,7 @@ import com.example.wchat.data.remote.dto.MensagemRequestDto
 import com.example.wchat.data.remote.dto.MensagemResponseDto
 import com.example.wchat.data.remote.dto.NotificacaoRequestDto
 import com.example.wchat.data.remote.dto.NotificacaoResponseDto
+import com.example.wchat.data.remote.dto.PageResponseDto
 import com.example.wchat.data.remote.dto.SegmentoDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -35,6 +36,13 @@ interface WChatApi {
         @Path("usuarioId") usuarioId: String,
         @Body request: FcmTokenRequestDto
     ): Response<Unit>
+
+
+    @GET("usuarios")
+    suspend fun listarUsuarios(
+        @Query("tipo") tipo: String? = null,
+        @Query("size") size: Int = 100
+    ): Response<PageResponseDto<UsuarioResponseDto>>
 
     @GET("usuarios/{id}")
     suspend fun buscarUsuarioPorId(

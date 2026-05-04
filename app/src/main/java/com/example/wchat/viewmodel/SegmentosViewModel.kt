@@ -1,42 +1,55 @@
 package com.example.wchat.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.example.wchat.data.repository.SegmentoRepository
-import com.example.wchat.data.repository.UsuarioRepository
+import com.example.wchat.data.repository.BackendCatalogRepository
+import com.example.wchat.data.repository.UsuarioApiRepository
 import com.example.wchat.model.Segmento
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @UnstableApi
-class SegmentosViewModel : ViewModel() {
-    private val todosOsSegmentosFlow = SegmentoRepository().getSegmentosEmTempoReal()
-    private val idsSegmentosDoUsuarioFlow = kotlinx.coroutines.flow.flow {
-        Log.d("SegmentosVM", "Buscando IDs de segmentos do usuário...")
-        val ids = UsuarioRepository().getSegmentosDoUsuarioLogado()
-        Log.d("SegmentosVM", "IDs encontrados: $ids")
-        emit(ids)
+class SegmentosViewModel(application: Application) : AndroidViewModel(application) {
+    private val catalogRepository = BackendCatalogRepository(application.applicationContext)
+    private val usuarioRepository = UsuarioApiRepository(application.applicationContext)
+
+    private val _uiState = MutableStateFlow(SegmentosUiState())
+    val uiState: StateFlow<SegmentosUiState> = _uiState
+
+    init {
+        carregarSegmentos()
     }
 
-    val uiState: StateFlow<SegmentosUiState> = combine(
-        todosOsSegmentosFlow,
-        idsSegmentosDoUsuarioFlow
-    ) { resultadoSegmentos, idsSegmentosUsuario ->
-        val segmentos = resultadoSegmentos.getOrNull() ?: emptyList()
-        SegmentosUiState(
-            todosOsSegmentos = segmentos,
-            idsSegmentosDoUsuario = idsSegmentosUsuario.toSet()
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = SegmentosUiState()
-    )
+    fun carregarSegmentos() {
+        viewModelScope.launch {
+            val usuarioAtualId = Firebase.auth.currentUser?.uid
+            val segmentosResult = catalogRepository.listarSegmentos()
+            val segmentosDoUsuario = usuarioAtualId?.let { id ->
+                usuarioRepository.buscarPorId(id).getOrNull()?.segmentos.orEmpty()
+            }.orEmpty()
+
+            segmentosResult
+                .onSuccess { segmentos ->
+                    _uiState.value = SegmentosUiState(
+                        todosOsSegmentos = segmentos,
+                        idsSegmentosDoUsuario = segmentosDoUsuario.toSet()
+                    )
+                }
+                .onFailure { e ->
+                    Log.e("SegmentosVM", "Erro ao carregar segmentos pelo backend", e)
+                    _uiState.value = SegmentosUiState()
+                }
+        }
+    }
 
     val segmentos: StateFlow<List<Segmento>> = uiState
         .map { it.todosOsSegmentos }
@@ -48,7 +61,9 @@ class SegmentosViewModel : ViewModel() {
 
     val segmentosDoCliente: StateFlow<List<Segmento>> = uiState
         .map { state ->
-            state.todosOsSegmentos.filter { it.id in state.idsSegmentosDoUsuario }
+            state.todosOsSegmentos.filter { segmento ->
+                segmento.id in state.idsSegmentosDoUsuario || segmento.tipo?.name in state.idsSegmentosDoUsuario
+            }
         }
         .stateIn(
             scope = viewModelScope,

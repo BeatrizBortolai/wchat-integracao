@@ -5,6 +5,8 @@ import com.example.wchat.data.remote.api.RetrofitProvider
 import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.UsuarioResponseDto
 import com.example.wchat.data.remote.dto.UsuarioUpdateRequestDto
+import com.example.wchat.model.TipoUsuario
+import com.example.wchat.model.Usuario
 
 class UsuarioApiRepository(context: Context) {
 
@@ -75,6 +77,31 @@ class UsuarioApiRepository(context: Context) {
             } else {
                 Result.failure(
                     Exception("Erro ao deletar usuário: ${response.code()} - ${response.errorBody()?.string()}")
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun listarUsuarios(): Result<List<Usuario>> {
+        return try {
+            val response = api.listarUsuarios()
+
+            if (response.isSuccessful && response.body() != null) {
+                val usuarios = response.body()!!.content.map { dto ->
+                    Usuario(
+                        id = dto.id,
+                        nome = dto.nome,
+                        email = dto.email,
+                        tipo = TipoUsuario.valueOf(dto.tipo)
+                    )
+                }
+
+                Result.success(usuarios)
+            } else {
+                Result.failure(
+                    Exception("Erro ao listar usuários: ${response.code()} - ${response.errorBody()?.string()}")
                 )
             }
         } catch (e: Exception) {

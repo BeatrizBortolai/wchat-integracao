@@ -15,10 +15,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/**
- * Repository REST para cumprir a Sprint 2: o app deixa de depender apenas de mocks/Firestore
- * e passa a consumir o backend Spring Boot/MongoDB.
- */
+/** Repository REST para mensagens. O Firebase fica apenas para autenticação/FCM. */
 class BackendChatRepository(context: Context) {
     private val api: WChatApi = RetrofitProvider.create(context).create(WChatApi::class.java)
     private val usuarioAtualId: String? get() = Firebase.auth.currentUser?.uid
@@ -29,17 +26,26 @@ class BackendChatRepository(context: Context) {
 
         val response = when (tipoChat) {
             TipoChat.UM_A_UM -> {
-                val destinatarioId = chatId.replace(remetenteId, "").replace("_", "")
-                api.enviarMensagem(MensagemRequestDto(remetenteId = remetenteId, destinatarioId = destinatarioId, texto = texto.trim()))
+                val destinatarioId = obterOutroUsuarioId(chatId, remetenteId)
+                    ?: return Result.failure(Exception("Não foi possível identificar o destinatário"))
+                api.enviarMensagem(
+                    MensagemRequestDto(
+                        remetenteId = remetenteId,
+                        destinatarioId = destinatarioId,
+                        texto = texto.trim()
+                    )
+                )
             }
-            TipoChat.GRUPO -> api.enviarMensagem(MensagemRequestDto(remetenteId = remetenteId, grupoId = chatId, texto = texto.trim()))
+            TipoChat.GRUPO -> api.enviarMensagem(
+                MensagemRequestDto(remetenteId = remetenteId, grupoId = chatId, texto = texto.trim())
+            )
             TipoChat.SEGMENTO -> {
                 val segmentoResponse = api.enviarMensagemParaSegmento(
                     EnvioSegmentoRequestDto(remetenteId = remetenteId, segmento = chatId, texto = texto.trim())
                 )
                 if (segmentoResponse.isSuccessful) {
                     val primeira = segmentoResponse.body()?.firstOrNull()
-                    return if (primeira != null) Result.success(primeira.toModel()) else Result.success(Mensagem(texto = texto.trim(), remetenteId = remetenteId))
+                    return Result.success(primeira?.toModel() ?: Mensagem(texto = texto.trim(), remetenteId = remetenteId))
                 }
                 return Result.failure(Exception("Erro ao enviar para segmento: ${segmentoResponse.code()} - ${segmentoResponse.errorBody()?.string()}"))
             }
@@ -56,11 +62,12 @@ class BackendChatRepository(context: Context) {
         val remetenteId = usuarioAtualId ?: return Result.failure(Exception("Usuário não autenticado"))
         val response = when (tipoChat) {
             TipoChat.UM_A_UM -> {
-                val outroUsuarioId = chatId.replace(remetenteId, "").replace("_", "")
+                val outroUsuarioId = obterOutroUsuarioId(chatId, remetenteId)
+                    ?: return Result.failure(Exception("Não foi possível identificar o outro usuário"))
                 api.buscarMensagensDiretas(remetenteId, outroUsuarioId)
             }
             TipoChat.GRUPO -> api.buscarMensagensDoGrupo(chatId)
-            TipoChat.SEGMENTO -> return Result.success(emptyList()) // envio por segmento gera mensagens para clientes; histórico pode ser consultado pelas conversas.
+            TipoChat.SEGMENTO -> return Result.success(emptyList())
         }
 
         return if (response.isSuccessful) {
@@ -81,6 +88,11 @@ class BackendChatRepository(context: Context) {
         return if (response.isSuccessful) Result.success(Unit)
         else Result.failure(Exception("Erro ao excluir mensagem: ${response.code()}"))
     }
+
+    private fun obterOutroUsuarioId(chatId: String, usuarioAtualId: String): String? {
+        if (!chatId.contains("_") && chatId != usuarioAtualId) return chatId
+        return chatId.split("_").firstOrNull { it.isNotBlank() && it != usuarioAtualId }
+    }
 }
 
 fun MensagemResponseDto.toModel(): Mensagem = Mensagem(
@@ -100,3 +112,4 @@ private fun String.toDateOrNull(): Date? = try {
 } catch (_: Exception) {
     null
 }
+
