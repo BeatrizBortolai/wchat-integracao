@@ -94,7 +94,7 @@ class UsuarioApiRepository(context: Context) {
                         id = dto.id,
                         nome = dto.nome,
                         email = dto.email,
-                        tipo = TipoUsuario.valueOf(dto.tipo)
+                        tipo = TipoUsuario.valueOf(dto.tipo.uppercase())
                     )
                 }
 
