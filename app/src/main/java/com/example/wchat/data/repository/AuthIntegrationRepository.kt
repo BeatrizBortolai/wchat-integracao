@@ -1,6 +1,7 @@
 package com.example.wchat.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.wchat.data.remote.api.RetrofitProvider
 import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.AuthSyncRequestDto
@@ -49,6 +50,9 @@ class AuthIntegrationRepository(
 
             if (response.isSuccessful && response.body() != null) {
                 val authSession = response.body()!!.toDomain()
+
+                Log.d("TOKEN", authSession.token)
+
                 sessionManager.saveJwtToken(authSession.token)
                 sessionManager.saveBackendUserId(authSession.usuarioId)
                 Result.success(authSession)

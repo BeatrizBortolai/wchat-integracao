@@ -42,6 +42,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -65,7 +66,15 @@ fun ChatScreen(
     navController: NavController,
     tipoUsuarioLogado: TipoUsuario
 ) {
-    val viewModel: ChatViewModel = viewModel(factory = ChatViewModelFactory(tipoChat, chatId))
+    val context = LocalContext.current
+
+    val viewModel: ChatViewModel = viewModel(
+        factory = ChatViewModelFactory(
+            context = context,
+            tipoChat = tipoChat,
+            chatId = chatId
+        )
+    )
     val mensagens by viewModel.mensagens.collectAsState()
     val lazyListState = rememberLazyListState()
     var mensagemParaExcluir by remember { mutableStateOf<Mensagem?>(null) }
