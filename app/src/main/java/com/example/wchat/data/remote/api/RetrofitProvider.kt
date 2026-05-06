@@ -24,7 +24,7 @@ object RetrofitProvider {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
+            .baseUrl(ApiConfig.getBaseUrl())
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
