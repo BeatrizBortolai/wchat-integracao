@@ -61,7 +61,13 @@ class MainViewModel : ViewModel() {
                 }
 
                 val descricaoPopup = when (collection) {
-                    "grupos", "segmentos" -> "$remetenteNome: $corpoMensagem"
+                    "grupos", "segmentos" -> {
+                        if (corpoMensagem.startsWith("$remetenteNome:")) {
+                            corpoMensagem
+                        } else {
+                            "$remetenteNome: $corpoMensagem"
+                        }
+                    }
                     else -> corpoMensagem
                 }
 
