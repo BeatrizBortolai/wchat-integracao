@@ -30,10 +30,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         val data = remoteMessage.data
         if (data.isNotEmpty()) {
-            Log.d("FCM", "Payload de Dados: $data")
+            Log.d("FCM", "Payload de dados: $data")
         }
 
-        val title = data["title"] ?: remoteMessage.notification?.title ?: "Nova mensagem"
+        val title = data["title"] ?: data["remetenteNome"] ?: remoteMessage.notification?.title ?: "Nova mensagem"
         val body = data["body"] ?: remoteMessage.notification?.body ?: "Você recebeu uma nova mensagem."
 
         if (AppLifecycleTracker.isForeground()) {
@@ -45,7 +45,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     chatId = data["chatId"],
                     collection = data["collection"],
                     remetenteId = data["remetenteId"],
-                    remetenteNome = data["remetenteNome"]
+                    remetenteNome = data["remetenteNome"],
+                    mensagemId = data["mensagemId"]
                 )
             )
             return
@@ -56,7 +57,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d("FCM", "Novo Token gerado: $token")
+        Log.d("FCM", "Novo token gerado: $token")
         sendTokenToBackend(token)
     }
 
@@ -73,6 +74,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             try {
                 val api = RetrofitProvider.create(this@MyFirebaseMessagingService).create(WChatApi::class.java)
                 val response = api.atualizarFcmToken(usuarioId, FcmTokenRequestDto(token))
+
                 if (response.isSuccessful) {
                     Log.d("FCM", "Token FCM enviado ao backend com sucesso.")
                 } else {
@@ -95,12 +97,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notificações para novas mensagens do WChat"
+                enableVibration(true)
+                setShowBadge(true)
             }
+
             notificationManager.createNotificationChannel(channel)
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             putExtra("chatId", data["chatId"])
             putExtra("collection", data["collection"])
             putExtra("remetenteId", data["remetenteId"])
@@ -115,15 +120,19 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_wchat_notification)
             .setContentTitle(title)
             .setContentText(messageBody)
             .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }

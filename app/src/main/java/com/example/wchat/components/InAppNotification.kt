@@ -14,17 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.wchat.model.Mensagem
-
+import com.example.wchat.viewmodel.PopupNotificationInfo
 
 @Composable
 fun InAppNotification(
-    notificationInfo: Pair<Mensagem, String?>?,
-    onNotificationClick: (Mensagem) -> Unit,
+    notificationInfo: PopupNotificationInfo?,
+    onNotificationClick: (PopupNotificationInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val (mensagem, nomeDoChat) = notificationInfo ?: Pair(null, null)
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -32,20 +29,15 @@ fun InAppNotification(
         contentAlignment = Alignment.TopCenter
     ) {
         AnimatedVisibility(
-            visible = mensagem != null && nomeDoChat != null,
+            visible = notificationInfo != null,
             enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(animationSpec = tween(durationMillis = 200))
         ) {
-            if (mensagem != null && nomeDoChat != null) {
-                Box(modifier = Modifier.clickable { onNotificationClick(mensagem) }) {
-                    val descricaoFinal = if (nomeDoChat == mensagem.remetenteNome) {
-                        mensagem.texto
-                    } else {
-                        "${mensagem.remetenteNome}: ${mensagem.texto}"
-                    }
+            notificationInfo?.let { info ->
+                Box(modifier = Modifier.clickable { onNotificationClick(info) }) {
                     PopupNotificationCard(
-                        titulo = nomeDoChat,
-                        descricao = descricaoFinal
+                        titulo = info.titulo,
+                        descricao = info.descricao
                     )
                 }
             }

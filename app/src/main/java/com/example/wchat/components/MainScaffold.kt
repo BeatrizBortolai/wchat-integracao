@@ -1,5 +1,6 @@
 package com.example.wchat.components
 
+import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
@@ -168,19 +169,27 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
 
         InAppNotification(
             notificationInfo = ultimaMensagemInfo,
-            onNotificationClick = { mensagemClicada ->
-                val (_, chatId) = ultimaMensagemInfo ?: return@InAppNotification
-                val grupoEncontrado = gruposViewModel.grupos.value.find { it.id == chatId }
-                val segmentoEncontrado = segmentosViewModel.segmentos.value.find { it.id == chatId }
+            onNotificationClick = { info ->
+                val chatId = Uri.encode(info.chatId)
+                val tipoUsuarioLogado = tipoUsuario.name
+                val remetenteId = Uri.encode(info.mensagem.remetenteId)
+                val remetenteNome = Uri.encode(info.mensagem.remetenteNome.ifBlank { info.titulo })
 
-                val rotaNavegacao = when {
-                    grupoEncontrado != null -> "chatGrupo/${grupoEncontrado.id}/${tipoUsuario.name}"
-                    segmentoEncontrado != null -> "chatSegmento/${segmentoEncontrado.id}/${tipoUsuario.name}"
-                    else -> "chat1a1/${mensagemClicada.remetenteId}/${mensagemClicada.remetenteNome}/${tipoUsuario.name}"
+                val rotaNavegacao = when (info.collection) {
+                    "grupos" -> "chatGrupo/$chatId/$tipoUsuarioLogado"
+                    "segmentos" -> "chatSegmento/$chatId/$tipoUsuarioLogado"
+                    "chats1a1" -> "chat1a1/$remetenteId/$remetenteNome/$tipoUsuarioLogado"
+                    else -> {
+                        Log.w("MainScaffold", "Coleção desconhecida na notificação: ${info.collection}")
+                        null
+                    }
                 }
 
-                Log.d("MainScaffold", "Notificação clicada! Navegando para: $rotaNavegacao")
-                mainNavController.navigate(rotaNavegacao)
+                rotaNavegacao?.let { rota ->
+                    Log.d("MainScaffold", "Notificação clicada. Navegando para: $rota")
+                    mainNavController.navigate(rota)
+                }
+
                 mainViewModel.dispensarNotificacao()
             },
             onDismiss = {

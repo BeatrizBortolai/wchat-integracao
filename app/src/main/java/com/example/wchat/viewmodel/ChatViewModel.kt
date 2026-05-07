@@ -10,6 +10,9 @@ import com.example.wchat.model.Mensagem
 import com.example.wchat.model.TipoChat
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,18 +29,46 @@ class ChatViewModel(
     private val _mensagens = MutableStateFlow<List<Mensagem>>(emptyList())
     val mensagens: StateFlow<List<Mensagem>> = _mensagens.asStateFlow()
 
+    private var pollingJob: Job? = null
+    private var carregando = false
+
     init {
-        carregarMensagens()
+        iniciarAtualizacaoAutomatica()
+    }
+
+    private fun iniciarAtualizacaoAutomatica() {
+        pollingJob?.cancel()
+
+        pollingJob = viewModelScope.launch {
+            while (isActive) {
+                carregarMensagensInterno()
+                delay(2000)
+            }
+        }
     }
 
     fun carregarMensagens() {
         viewModelScope.launch {
+            carregarMensagensInterno()
+        }
+    }
+
+    private suspend fun carregarMensagensInterno() {
+        if (carregando) return
+
+        carregando = true
+
+        try {
             repository.buscarMensagens(tipoChat, chatId)
                 .onSuccess { lista ->
                     _mensagens.value = lista.sortedByDescending { it.timestamp?.time ?: 0L }
                     marcarMensagensComoLidas(lista)
                 }
-                .onFailure { e -> Log.e("ChatViewModel", "Erro ao carregar mensagens", e) }
+                .onFailure { e ->
+                    Log.e("ChatViewModel", "Erro ao carregar mensagens", e)
+                }
+        } finally {
+            carregando = false
         }
     }
 
@@ -45,8 +76,12 @@ class ChatViewModel(
         viewModelScope.launch {
             try {
                 repository.enviarMensagem(tipoChat, chatId, texto)
-                    .onSuccess { carregarMensagens() }
-                    .onFailure { e -> Log.e("ChatViewModel", "Erro ao enviar mensagem", e) }
+                    .onSuccess {
+                        carregarMensagensInterno()
+                    }
+                    .onFailure { e ->
+                        Log.e("ChatViewModel", "Erro ao enviar mensagem", e)
+                    }
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "Erro ao enviar mensagem", e)
             }
@@ -61,13 +96,14 @@ class ChatViewModel(
 
         viewModelScope.launch {
             repository.excluirMensagem(mensagem.id)
-                .onSuccess { carregarMensagens() }
+                .onSuccess { carregarMensagensInterno() }
                 .onFailure { e -> Log.e("ChatViewModel", "Erro ao excluir mensagem ${mensagem.id}", e) }
         }
     }
 
     private fun marcarMensagensComoLidas(mensagensAtuais: List<Mensagem>) {
         val usuarioId = usuarioAtualId ?: return
+
         mensagensAtuais
             .filter { it.id.isNotBlank() && it.remetenteId != usuarioId && !it.lida }
             .forEach { mensagem ->
@@ -75,6 +111,11 @@ class ChatViewModel(
                     repository.marcarComoLida(mensagem.id)
                 }
             }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        pollingJob?.cancel()
     }
 }
 

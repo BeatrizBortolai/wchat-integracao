@@ -14,9 +14,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class PopupNotificationInfo(
+    val mensagem: Mensagem,
+    val titulo: String,
+    val descricao: String,
+    val chatId: String,
+    val collection: String?
+)
+
 class MainViewModel : ViewModel() {
-    private val _ultimaMensagemRecebida = MutableStateFlow<Pair<Mensagem, String?>?>(null)
-    val ultimaMensagemRecebida: StateFlow<Pair<Mensagem, String?>?> = _ultimaMensagemRecebida.asStateFlow()
+
+    private val _ultimaMensagemRecebida = MutableStateFlow<PopupNotificationInfo?>(null)
+    val ultimaMensagemRecebida: StateFlow<PopupNotificationInfo?> = _ultimaMensagemRecebida.asStateFlow()
 
     private var dismissJob: Job? = null
 
@@ -27,22 +36,49 @@ class MainViewModel : ViewModel() {
     fun iniciarOuvinteDeNotificacao(gruposAtuais: List<Grupo>, segmentosAtuais: List<Segmento>) {
         Log.d(
             "MainVM",
-            "Popup in-app agora usa eventos do FCM/backend. Grupos=${gruposAtuais.size}, segmentos=${segmentosAtuais.size}"
+            "Popup in-app usa eventos FCM/backend. Grupos=${gruposAtuais.size}, segmentos=${segmentosAtuais.size}"
         )
     }
 
     private fun observarEventosInApp() {
         viewModelScope.launch {
             InAppNotificationManager.events.collect { event ->
+                val chatId = event.chatId.orEmpty()
+                val collection = event.collection
+                val remetenteNome = event.remetenteNome ?: event.title
+                val corpoMensagem = event.body
+
+                if (chatId.isBlank()) {
+                    Log.w("MainVM", "Notificação in-app ignorada: chatId ausente. Evento=$event")
+                    return@collect
+                }
+
+                val tituloPopup = when (collection) {
+                    "grupos" -> event.chatNome ?: "Grupo $chatId"
+                    "segmentos" -> event.chatNome ?: "Segmento $chatId"
+                    "chats1a1" -> remetenteNome
+                    else -> event.chatNome ?: event.title
+                }
+
+                val descricaoPopup = when (collection) {
+                    "grupos", "segmentos" -> "$remetenteNome: $corpoMensagem"
+                    else -> corpoMensagem
+                }
+
                 val mensagem = Mensagem(
-                    id = "",
-                    texto = event.body,
+                    id = event.mensagemId.orEmpty(),
+                    texto = corpoMensagem,
                     remetenteId = event.remetenteId.orEmpty(),
-                    remetenteNome = event.remetenteNome ?: event.title
+                    remetenteNome = remetenteNome
                 )
 
-                val tituloPopup = event.remetenteNome ?: event.title
-                _ultimaMensagemRecebida.value = Pair(mensagem, tituloPopup)
+                _ultimaMensagemRecebida.value = PopupNotificationInfo(
+                    mensagem = mensagem,
+                    titulo = tituloPopup,
+                    descricao = descricaoPopup,
+                    chatId = chatId,
+                    collection = collection
+                )
 
                 iniciarTimerParaDispensar()
             }
