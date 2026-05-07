@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.Log
-import androidx.media3.common.util.UnstableApi
+import android.util.Log
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -271,7 +269,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(UnstableApi::class)
     private fun navegarParaNotificacao(
         chatId: String,
         collection: String?,
@@ -331,7 +328,6 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    @OptIn(UnstableApi::class)
     private fun handleIntent(intent: Intent?) {
         if (!this::navController.isInitialized) return
 

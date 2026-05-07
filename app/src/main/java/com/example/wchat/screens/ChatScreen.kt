@@ -53,6 +53,7 @@ import com.example.wchat.components.NotificacaoCard
 import com.example.wchat.model.TipoChat
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.services.ActiveChatTracker
+import com.example.wchat.utils.ChatRouteUtils
 import com.example.wchat.viewmodel.ChatViewModel
 import com.example.wchat.viewmodel.ChatViewModelFactory
 import com.google.firebase.Firebase
@@ -81,17 +82,21 @@ fun ChatScreen(
     val lazyListState = rememberLazyListState()
     var mensagemParaExcluir by remember { mutableStateOf<Mensagem?>(null) }
 
-    val collectionAtual = when (tipoChat) {
-        TipoChat.UM_A_UM -> "chats1a1"
-        TipoChat.GRUPO -> "grupos"
-        TipoChat.SEGMENTO -> "segmentos"
+    val collectionAtual = ChatRouteUtils.collectionFor(tipoChat)
+    val usuarioAtualId = Firebase.auth.currentUser?.uid
+    val chatIdRastreado = remember(chatId, collectionAtual, usuarioAtualId) {
+        ChatRouteUtils.normalizeChatId(
+            chatId = chatId,
+            collection = collectionAtual,
+            currentUserId = usuarioAtualId
+        ) ?: chatId
     }
 
-    DisposableEffect(chatId, collectionAtual) {
-        ActiveChatTracker.enterChat(chatId = chatId, collection = collectionAtual)
+    DisposableEffect(chatIdRastreado, collectionAtual) {
+        ActiveChatTracker.enterChat(chatId = chatIdRastreado, collection = collectionAtual)
 
         onDispose {
-            ActiveChatTracker.leaveChat(chatId = chatId, collection = collectionAtual)
+            ActiveChatTracker.leaveChat(chatId = chatIdRastreado, collection = collectionAtual)
         }
     }
 
