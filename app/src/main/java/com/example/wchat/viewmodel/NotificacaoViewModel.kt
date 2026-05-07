@@ -14,6 +14,8 @@ import com.example.wchat.model.Notificacao
 import com.example.wchat.model.Segmento
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.model.Usuario
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -149,24 +151,44 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
                 return@launch
             }
 
+            val remetenteId = Firebase.auth.currentUser?.uid
+            if (remetenteId.isNullOrBlank()) {
+                _evento.emit(NotificacaoEvento.Erro("Usuário autenticado não encontrado."))
+                return@launch
+            }
+
             _destinatariosState.value = _destinatariosState.value.copy(isEnviando = true, error = null)
 
             try {
-                val idsDiretos = destinatariosParaEnviar.flatMap { destinatario ->
-                    when (destinatario) {
-                        is Usuario -> listOf(destinatario.id)
-                        is Grupo -> destinatario.participantesIds
-                        else -> emptyList()
-                    }
-                }.filter { it.isNotBlank() }.distinct()
+                val usuariosSelecionados = destinatariosParaEnviar
+                    .filterIsInstance<Usuario>()
+                    .map { it.id }
+                    .filter { it.isNotBlank() }
+                    .distinct()
 
-                if (idsDiretos.isNotEmpty()) {
+                if (usuariosSelecionados.isNotEmpty()) {
                     notificacaoRepository.enviarCampanha(
                         titulo = notificacao.titulo,
                         descricao = notificacao.descricao,
                         nomeCampanha = notificacao.nomeCampanha,
-                        tipoDestinatario = "LISTA",
-                        destinatariosIds = idsDiretos,
+                        remetenteId = remetenteId,
+                        tipoDestinatario = "USUARIO",
+                        destinatariosIds = usuariosSelecionados,
+                        linkEvento = notificacao.linkEvento.ifBlank { null },
+                        urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
+                        urlInscrever = notificacao.urlInscrever.ifBlank { null }
+                    ).getOrThrow()
+                }
+
+                destinatariosParaEnviar.filterIsInstance<Grupo>().forEach { grupo ->
+                    val grupoId = grupo.tipo?.name ?: grupo.id
+                    notificacaoRepository.enviarCampanha(
+                        titulo = notificacao.titulo,
+                        descricao = notificacao.descricao,
+                        nomeCampanha = notificacao.nomeCampanha,
+                        remetenteId = remetenteId,
+                        tipoDestinatario = "GRUPO",
+                        grupo = grupoId,
                         linkEvento = notificacao.linkEvento.ifBlank { null },
                         urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
                         urlInscrever = notificacao.urlInscrever.ifBlank { null }
@@ -174,24 +196,32 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
                 }
 
                 destinatariosParaEnviar.filterIsInstance<Segmento>().forEach { segmento ->
-                    val nomeSegmento = segmento.tipo?.name ?: segmento.id
+                    val segmentoId = segmento.tipo?.name ?: segmento.id
                     notificacaoRepository.enviarCampanha(
                         titulo = notificacao.titulo,
                         descricao = notificacao.descricao,
                         nomeCampanha = notificacao.nomeCampanha,
+                        remetenteId = remetenteId,
                         tipoDestinatario = "SEGMENTO",
-                        segmento = nomeSegmento,
+                        segmento = segmentoId,
                         linkEvento = notificacao.linkEvento.ifBlank { null },
                         urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
                         urlInscrever = notificacao.urlInscrever.ifBlank { null }
                     ).getOrThrow()
                 }
 
-                _destinatariosState.value = _destinatariosState.value.copy(isEnviando = false, envioConcluido = true)
-                _evento.emit(NotificacaoEvento.SucessoEnvio("Notificação enviada com sucesso pelo backend!"))
+                _destinatariosState.value = _destinatariosState.value.copy(
+                    isEnviando = false,
+                    envioConcluido = true
+                )
+                _evento.emit(NotificacaoEvento.SucessoEnvio("Campanha enviada com sucesso!"))
             } catch (e: Exception) {
-                _destinatariosState.value = _destinatariosState.value.copy(isEnviando = false, error = "Falha ao enviar: ${e.message}")
-                _evento.emit(NotificacaoEvento.Erro("Falha ao enviar: ${e.message}"))
+                val mensagemErro = "Falha ao enviar: ${e.message}"
+                _destinatariosState.value = _destinatariosState.value.copy(
+                    isEnviando = false,
+                    error = mensagemErro
+                )
+                _evento.emit(NotificacaoEvento.Erro(mensagemErro))
             }
         }
     }

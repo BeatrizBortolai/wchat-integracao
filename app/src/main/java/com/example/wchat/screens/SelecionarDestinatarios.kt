@@ -76,13 +76,28 @@ fun SelecionarDestinatariosScreen(
     val context = LocalContext.current
 
     val gruposFiltrados = remember(uiState.grupos, uiState.textoBusca) {
-        uiState.grupos.filter { it.id.contains(uiState.textoBusca, ignoreCase = true) }
+        val busca = uiState.textoBusca.trim()
+        uiState.grupos.filter { grupo ->
+            busca.isBlank() ||
+                    grupo.id.contains(busca, ignoreCase = true) ||
+                    grupo.tipo?.nomeExibicao?.contains(busca, ignoreCase = true) == true
+        }
     }
     val segmentosFiltrados = remember(uiState.segmentos, uiState.textoBusca) {
-        uiState.segmentos.filter { it.id.contains(uiState.textoBusca, ignoreCase = true) }
+        val busca = uiState.textoBusca.trim()
+        uiState.segmentos.filter { segmento ->
+            busca.isBlank() ||
+                    segmento.id.contains(busca, ignoreCase = true) ||
+                    segmento.tipo?.nomeExibicao?.contains(busca, ignoreCase = true) == true
+        }
     }
     val usuariosFiltrados = remember(uiState.usuarios, uiState.textoBusca) {
-        uiState.usuarios.filter { it.nome.contains(uiState.textoBusca, ignoreCase = true) }
+        val busca = uiState.textoBusca.trim()
+        uiState.usuarios.filter { usuario ->
+            busca.isBlank() ||
+                    usuario.nome.contains(busca, ignoreCase = true) ||
+                    usuario.email.contains(busca, ignoreCase = true)
+        }
     }
 
     LaunchedEffect(key1 = true) {
@@ -223,7 +238,7 @@ fun SecaoGrupos(
         ) {
             items(grupos, key = { it.id }) { grupo ->
                 ChipSelecionavel(
-                    texto = grupo.id,
+                    texto = grupo.tipo?.nomeExibicao ?: grupo.id,
                     isSelected = destinatariosSelecionados.contains(grupo),
                     onSelectChange = { onToggleGrupo(grupo) }
                 )
@@ -253,7 +268,7 @@ fun SecaoSegmentos(
         ) {
             items(segmentos, key = { it.id }) { segmento ->
                 ChipSelecionavel(
-                    texto = segmento.id,
+                    texto = segmento.tipo?.nomeExibicao ?: segmento.id,
                     isSelected = destinatariosSelecionados.contains(segmento),
                     onSelectChange = { onToggleSegmento(segmento) }
                 )

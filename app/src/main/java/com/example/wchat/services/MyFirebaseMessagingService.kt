@@ -55,7 +55,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     remetenteId = data["remetenteId"],
                     remetenteNome = data["remetenteNome"],
                     mensagemId = data["mensagemId"],
-                    chatNome = data["chatNome"]
+                    chatNome = data["chatNome"],
+                    tipoMensagem = data["tipoMensagem"]
                 )
             )
             return

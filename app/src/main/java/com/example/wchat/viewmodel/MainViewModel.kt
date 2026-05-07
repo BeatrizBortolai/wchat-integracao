@@ -60,8 +60,11 @@ class MainViewModel : ViewModel() {
                     else -> event.chatNome ?: event.title
                 }
 
-                val descricaoPopup = when (collection) {
-                    "grupos", "segmentos" -> {
+                val isCampanha = event.tipoMensagem.equals("NOTIFICATION", ignoreCase = true)
+
+                val descricaoPopup = when {
+                    isCampanha -> corpoMensagem
+                    collection == "grupos" || collection == "segmentos" -> {
                         if (corpoMensagem.startsWith("$remetenteNome:")) {
                             corpoMensagem
                         } else {

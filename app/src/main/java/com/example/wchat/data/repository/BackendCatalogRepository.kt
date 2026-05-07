@@ -11,31 +11,95 @@ import com.example.wchat.model.TipoSegmento
 class BackendCatalogRepository(context: Context) {
     private val api: WChatApi = RetrofitProvider.create(context).create(WChatApi::class.java)
 
+    /**
+     * Catálogo administrativo de grupos.
+     *
+     * A tela de campanha precisa exibir todos os grupos possíveis do app, mesmo quando
+     * ainda não existe nenhum cliente cadastrado naquele grupo. Por isso fazemos merge
+     * entre o catálogo fixo do app (TipoGrupo) e os dados vindos do backend, preservando
+     * participantesIds quando o grupo já existe no banco.
+     */
     suspend fun listarGrupos(): Result<List<Grupo>> = try {
         val response = api.listarGrupos()
         if (response.isSuccessful) {
-            Result.success(response.body().orEmpty().map { dto ->
-                Grupo(
-                    id = dto.id.ifBlank { dto.nome },
-                    participantesIds = dto.participantesIds,
-                    tipo = TipoGrupo.values().find { it.name == dto.nome || it.name == dto.id }
-                )
-            })
-        } else Result.failure(Exception("Erro ao listar grupos: ${response.code()}"))
-    } catch (e: Exception) { Result.failure(e) }
+            val gruposBackendPorId = response.body()
+                .orEmpty()
+                .associateBy { dto ->
+                    (dto.id.ifBlank { dto.nome }).uppercase()
+                }
 
+            val gruposCatalogo = TipoGrupo.todos().map { tipo ->
+                val dto = gruposBackendPorId[tipo.name]
+                Grupo(
+                    id = tipo.name,
+                    participantesIds = dto?.participantesIds.orEmpty(),
+                    tipo = tipo
+                )
+            }
+
+            val gruposExtrasBackend = gruposBackendPorId
+                .filterKeys { id -> TipoGrupo.values().none { it.name == id } }
+                .values
+                .map { dto ->
+                    val id = dto.id.ifBlank { dto.nome }.uppercase()
+                    Grupo(
+                        id = id,
+                        participantesIds = dto.participantesIds,
+                        tipo = TipoGrupo.values().find { it.name == id }
+                    )
+                }
+
+            Result.success(gruposCatalogo + gruposExtrasBackend)
+        } else {
+            Result.failure(Exception("Erro ao listar grupos: ${response.code()}"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    /**
+     * Catálogo administrativo de segmentos.
+     *
+     * Mesmo raciocínio de grupos: a campanha deve permitir escolher qualquer segmento
+     * previsto pelo app, ainda que não exista cliente nele no momento.
+     */
     suspend fun listarSegmentos(): Result<List<Segmento>> = try {
         val response = api.listarSegmentos()
         if (response.isSuccessful) {
-            Result.success(response.body().orEmpty().map { dto ->
+            val segmentosBackendPorId = response.body()
+                .orEmpty()
+                .associateBy { dto ->
+                    (dto.id.ifBlank { dto.nome }).uppercase()
+                }
+
+            val segmentosCatalogo = TipoSegmento.todos().map { tipo ->
+                val dto = segmentosBackendPorId[tipo.name]
                 Segmento(
-                    id = dto.id.ifBlank { dto.nome },
-                    participantesIds = dto.participantesIds,
-                    tipo = TipoSegmento.values().find { it.name == dto.nome || it.name == dto.id }
+                    id = tipo.name,
+                    participantesIds = dto?.participantesIds.orEmpty(),
+                    tipo = tipo
                 )
-            })
-        } else Result.failure(Exception("Erro ao listar segmentos: ${response.code()}"))
-    } catch (e: Exception) { Result.failure(e) }
+            }
+
+            val segmentosExtrasBackend = segmentosBackendPorId
+                .filterKeys { id -> TipoSegmento.values().none { it.name == id } }
+                .values
+                .map { dto ->
+                    val id = dto.id.ifBlank { dto.nome }.uppercase()
+                    Segmento(
+                        id = id,
+                        participantesIds = dto.participantesIds,
+                        tipo = TipoSegmento.values().find { it.name == id }
+                    )
+                }
+
+            Result.success(segmentosCatalogo + segmentosExtrasBackend)
+        } else {
+            Result.failure(Exception("Erro ao listar segmentos: ${response.code()}"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 
     suspend fun adicionarUsuarioAoGrupo(grupoId: String, usuarioId: String): Result<Unit> = try {
         val response = api.adicionarParticipanteGrupo(grupoId, usuarioId)

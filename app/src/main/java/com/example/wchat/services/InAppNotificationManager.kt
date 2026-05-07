@@ -11,7 +11,8 @@ data class InAppNotificationEvent(
     val remetenteId: String?,
     val remetenteNome: String?,
     val mensagemId: String? = null,
-    val chatNome: String? = null
+    val chatNome: String? = null,
+    val tipoMensagem: String? = null
 )
 
 object InAppNotificationManager {
