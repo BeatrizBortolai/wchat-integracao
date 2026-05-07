@@ -105,7 +105,7 @@ class ChatViewModel(
         val usuarioId = usuarioAtualId ?: return
 
         mensagensAtuais
-            .filter { it.id.isNotBlank() && it.remetenteId != usuarioId && !it.lida }
+            .filter { it.id.isNotBlank() && it.remetenteId != usuarioId }
             .forEach { mensagem ->
                 viewModelScope.launch {
                     repository.marcarComoLida(mensagem.id, usuarioId)

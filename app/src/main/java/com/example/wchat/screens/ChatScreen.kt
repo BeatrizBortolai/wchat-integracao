@@ -47,7 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.android.identity.util.UUID
+import java.util.UUID
 import com.example.wchat.components.MessageBubble
 import com.example.wchat.components.NotificacaoCard
 import com.example.wchat.model.TipoChat
