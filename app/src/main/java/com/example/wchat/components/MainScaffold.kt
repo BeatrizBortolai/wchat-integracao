@@ -1,6 +1,5 @@
 package com.example.wchat.components
 
-import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
@@ -60,8 +59,6 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
     val mainViewModel: MainViewModel = viewModel()
     val gruposViewModel: GruposViewModel = viewModel()
     val segmentosViewModel: SegmentosViewModel = viewModel()
-
-    val ultimaMensagemInfo by mainViewModel.ultimaMensagemRecebida.collectAsState()
     val grupoDoCliente by gruposViewModel.grupoDoCliente.collectAsState()
     val segmentosDoCliente by segmentosViewModel.segmentosDoCliente.collectAsState()
     val todosOsGrupos by gruposViewModel.grupos.collectAsState()
@@ -166,36 +163,6 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
                 tipoUsuario = tipoUsuario
             )
         }
-
-        InAppNotification(
-            notificationInfo = ultimaMensagemInfo,
-            onNotificationClick = { info ->
-                val chatId = Uri.encode(info.chatId)
-                val tipoUsuarioLogado = tipoUsuario.name
-                val remetenteId = Uri.encode(info.mensagem.remetenteId)
-                val remetenteNome = Uri.encode(info.mensagem.remetenteNome.ifBlank { info.titulo })
-
-                val rotaNavegacao = when (info.collection) {
-                    "grupos" -> "chatGrupo/$chatId/$tipoUsuarioLogado"
-                    "segmentos" -> "chatSegmento/$chatId/$tipoUsuarioLogado"
-                    "chats1a1" -> "chat1a1/$remetenteId/$remetenteNome/$tipoUsuarioLogado"
-                    else -> {
-                        Log.w("MainScaffold", "Coleção desconhecida na notificação: ${info.collection}")
-                        null
-                    }
-                }
-
-                rotaNavegacao?.let { rota ->
-                    Log.d("MainScaffold", "Notificação clicada. Navegando para: $rota")
-                    mainNavController.navigate(rota)
-                }
-
-                mainViewModel.dispensarNotificacao()
-            },
-            onDismiss = {
-                mainViewModel.dispensarNotificacao()
-            }
-        )
     }
 }
 

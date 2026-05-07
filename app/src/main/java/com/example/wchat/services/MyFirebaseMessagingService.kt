@@ -37,16 +37,25 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val body = data["body"] ?: remoteMessage.notification?.body ?: "Você recebeu uma nova mensagem."
 
         if (AppLifecycleTracker.isForeground()) {
-            Log.d("FCM", "App em primeiro plano. Mostrando popup in-app.")
+            val chatId = data["chatId"]
+            val collection = data["collection"]
+
+            if (ActiveChatTracker.isCurrentChat(chatId = chatId, collection = collection)) {
+                Log.d("FCM", "Mensagem do chat aberto. Popup in-app suprimido.")
+                return
+            }
+
+            Log.d("FCM", "App em primeiro plano. Mostrando popup in-app para outro chat.")
             InAppNotificationManager.show(
                 InAppNotificationEvent(
                     title = title,
                     body = body,
-                    chatId = data["chatId"],
-                    collection = data["collection"],
+                    chatId = chatId,
+                    collection = collection,
                     remetenteId = data["remetenteId"],
                     remetenteNome = data["remetenteNome"],
-                    mensagemId = data["mensagemId"]
+                    mensagemId = data["mensagemId"],
+                    chatNome = data["chatNome"]
                 )
             )
             return

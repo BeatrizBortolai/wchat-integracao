@@ -39,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
@@ -51,6 +52,7 @@ import com.example.wchat.components.MessageBubble
 import com.example.wchat.components.NotificacaoCard
 import com.example.wchat.model.TipoChat
 import com.example.wchat.model.TipoUsuario
+import com.example.wchat.services.ActiveChatTracker
 import com.example.wchat.viewmodel.ChatViewModel
 import com.example.wchat.viewmodel.ChatViewModelFactory
 import com.google.firebase.Firebase
@@ -78,6 +80,20 @@ fun ChatScreen(
     val mensagens by viewModel.mensagens.collectAsState()
     val lazyListState = rememberLazyListState()
     var mensagemParaExcluir by remember { mutableStateOf<Mensagem?>(null) }
+
+    val collectionAtual = when (tipoChat) {
+        TipoChat.UM_A_UM -> "chats1a1"
+        TipoChat.GRUPO -> "grupos"
+        TipoChat.SEGMENTO -> "segmentos"
+    }
+
+    DisposableEffect(chatId, collectionAtual) {
+        ActiveChatTracker.enterChat(chatId = chatId, collection = collectionAtual)
+
+        onDispose {
+            ActiveChatTracker.leaveChat(chatId = chatId, collection = collectionAtual)
+        }
+    }
 
     LaunchedEffect(mensagens.size) {
         if (mensagens.isNotEmpty()) {

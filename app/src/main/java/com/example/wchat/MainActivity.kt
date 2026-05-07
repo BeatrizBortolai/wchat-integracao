@@ -5,17 +5,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
 import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.media3.common.util.Log
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -23,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.wchat.components.InAppNotification
 import com.example.wchat.components.MainScaffold
 import com.example.wchat.model.TipoChat
 import com.example.wchat.model.TipoGrupo
@@ -30,6 +36,7 @@ import com.example.wchat.model.TipoSegmento
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.screens.*
 import com.example.wchat.ui.theme.WChatTheme
+import com.example.wchat.viewmodel.MainViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.auth
@@ -50,204 +57,238 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     navController = rememberNavController()
+                    val mainViewModel: MainViewModel = viewModel()
+                    val ultimaMensagemInfo by mainViewModel.ultimaMensagemRecebida.collectAsState()
+
                     LaunchedEffect(Unit) {
                         handleIntent(intent)
                     }
 
-                    NavHost(
-                        navController = navController,
-                        startDestination = "splash"
-                    ) {
-                        composable(route = "splash") {
-                            SplashScreen(navController = navController)
-                        }
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "splash"
+                        ) {
+                            composable(route = "splash") {
+                                SplashScreen(navController = navController)
+                            }
 
-                        composable(route = "telaInicial") { TelaInicial(navController) }
+                            composable(route = "telaInicial") { TelaInicial(navController) }
 
-                        composable(
-                            route = "telaLogin/{tipoUsuario}",
-                            arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
-                            val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
-                            Login(navController = navController, tipoUsuario = tipoUsuario)
-                        }
+                            composable(
+                                route = "telaLogin/{tipoUsuario}",
+                                arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
+                            ) { backStackEntry ->
+                                val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
+                                val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
+                                Login(navController = navController, tipoUsuario = tipoUsuario)
+                            }
 
-                        composable(
-                            "cadastro/{tipoUsuario}",
-                            arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
-                            val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
-                            Cadastro(navController = navController, tipoUsuario = tipoUsuario)
-                        }
+                            composable(
+                                "cadastro/{tipoUsuario}",
+                                arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
+                            ) { backStackEntry ->
+                                val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
+                                val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
+                                Cadastro(navController = navController, tipoUsuario = tipoUsuario)
+                            }
 
-                        composable(
-                            route = "main/{tipoUsuario}",
-                            arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
-                            val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
-                            MainScaffold(mainNavController = navController, tipoUsuario = tipoUsuario)
-                        }
+                            composable(
+                                route = "main/{tipoUsuario}",
+                                arguments = listOf(navArgument("tipoUsuario") { type = NavType.StringType })
+                            ) { backStackEntry ->
+                                val tipoString = backStackEntry.arguments?.getString("tipoUsuario")
+                                val tipoUsuario = TipoUsuario.valueOf(tipoString ?: "CLIENTE")
+                                MainScaffold(mainNavController = navController, tipoUsuario = tipoUsuario)
+                            }
 
-                        composable(route = "editarPerfil") {
-                            EditarPerfilScreen(navController = navController)
-                        }
+                            composable(route = "editarPerfil") {
+                                EditarPerfilScreen(navController = navController)
+                            }
 
-                        composable(
-                            route = "chat1a1/{destinatarioId}/{destinatarioNome}/{tipoUsuarioLogado}",
-                            arguments = listOf(
-                                navArgument("destinatarioId") { type = NavType.StringType },
-                                navArgument("destinatarioNome") { type = NavType.StringType },
-                                navArgument("tipoUsuarioLogado") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val destinatarioId = backStackEntry.arguments?.getString("destinatarioId") ?: return@composable
-                            val destinatarioNome = backStackEntry.arguments?.getString("destinatarioNome") ?: "Usuário"
-                            val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
+                            composable(
+                                route = "chat1a1/{destinatarioId}/{destinatarioNome}/{tipoUsuarioLogado}",
+                                arguments = listOf(
+                                    navArgument("destinatarioId") { type = NavType.StringType },
+                                    navArgument("destinatarioNome") { type = NavType.StringType },
+                                    navArgument("tipoUsuarioLogado") { type = NavType.StringType }
+                                )
+                            ) { backStackEntry ->
+                                val destinatarioId = backStackEntry.arguments?.getString("destinatarioId") ?: return@composable
+                                val destinatarioNome = backStackEntry.arguments?.getString("destinatarioNome") ?: "Usuário"
+                                val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
 
-                            val usuarioAtualId = Firebase.auth.currentUser?.uid ?: ""
-                            val chatIdFinal = listOf(usuarioAtualId, destinatarioId).sorted().joinToString("_")
+                                val usuarioAtualId = Firebase.auth.currentUser?.uid ?: ""
+                                val chatIdFinal = listOf(usuarioAtualId, destinatarioId).sorted().joinToString("_")
 
-                            ChatScreen(
-                                tipoChat = TipoChat.UM_A_UM,
-                                chatId = chatIdFinal,
-                                chatNome = destinatarioNome,
-                                onVoltarClick = { navController.popBackStack() },
-                                navController = navController,
-                                tipoUsuarioLogado = tipoUsuarioLogado
-                            )
-                        }
-
-                        composable(
-                            route = "chatGrupo/{idDoGrupo}/{tipoUsuarioLogado}",
-                            arguments = listOf(
-                                navArgument("idDoGrupo") { type = NavType.StringType },
-                                navArgument("tipoUsuarioLogado") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val idDoGrupo = backStackEntry.arguments?.getString("idDoGrupo") ?: return@composable
-                            val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
-                            val nomeDoGrupo = TipoGrupo.values().find { it.name == idDoGrupo }?.nomeExibicao ?: "Grupo"
-
-                            ChatScreen(
-                                tipoChat = TipoChat.GRUPO,
-                                chatId = idDoGrupo,
-                                chatNome = nomeDoGrupo,
-                                onVoltarClick = { navController.popBackStack() },
-                                navController = navController,
-                                tipoUsuarioLogado = tipoUsuarioLogado
-                            )
-                        }
-
-                        composable(
-                            route = "chatSegmento/{idDoSegmento}/{tipoUsuarioLogado}",
-                            arguments = listOf(
-                                navArgument("idDoSegmento") { type = NavType.StringType },
-                                navArgument("tipoUsuarioLogado") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val idDoSegmento = backStackEntry.arguments?.getString("idDoSegmento") ?: return@composable
-                            val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
-                            val nomeDoSegmento = TipoSegmento.values().find { it.name == idDoSegmento }?.nomeExibicao ?: "Segmento"
-
-                            ChatScreen(
-                                tipoChat = TipoChat.SEGMENTO,
-                                chatId = idDoSegmento,
-                                chatNome = nomeDoSegmento,
-                                onVoltarClick = { navController.popBackStack() },
-                                navController = navController,
-                                tipoUsuarioLogado = tipoUsuarioLogado
-                            )
-                        }
-
-                        composable(
-                            route = "perfil/{usuarioId}/{tipoUsuarioLogado}",
-                            arguments = listOf(
-                                navArgument("usuarioId") { type = NavType.StringType },
-                                navArgument("tipoUsuarioLogado") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val usuarioId = backStackEntry.arguments?.getString("usuarioId")
-                            val tipoUsuarioLogadoString = backStackEntry.arguments?.getString("tipoUsuarioLogado")
-
-                            if (usuarioId != null && tipoUsuarioLogadoString != null) {
-                                val tipoUsuarioLogado = TipoUsuario.valueOf(tipoUsuarioLogadoString)
-
-                                PerfilScreen(
+                                ChatScreen(
+                                    tipoChat = TipoChat.UM_A_UM,
+                                    chatId = chatIdFinal,
+                                    chatNome = destinatarioNome,
+                                    onVoltarClick = { navController.popBackStack() },
                                     navController = navController,
-                                    usuarioId = usuarioId,
                                     tipoUsuarioLogado = tipoUsuarioLogado
                                 )
                             }
+
+                            composable(
+                                route = "chatGrupo/{idDoGrupo}/{tipoUsuarioLogado}",
+                                arguments = listOf(
+                                    navArgument("idDoGrupo") { type = NavType.StringType },
+                                    navArgument("tipoUsuarioLogado") { type = NavType.StringType }
+                                )
+                            ) { backStackEntry ->
+                                val idDoGrupo = backStackEntry.arguments?.getString("idDoGrupo") ?: return@composable
+                                val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
+                                val nomeDoGrupo = TipoGrupo.values().find { it.name == idDoGrupo }?.nomeExibicao ?: "Grupo"
+
+                                ChatScreen(
+                                    tipoChat = TipoChat.GRUPO,
+                                    chatId = idDoGrupo,
+                                    chatNome = nomeDoGrupo,
+                                    onVoltarClick = { navController.popBackStack() },
+                                    navController = navController,
+                                    tipoUsuarioLogado = tipoUsuarioLogado
+                                )
+                            }
+
+                            composable(
+                                route = "chatSegmento/{idDoSegmento}/{tipoUsuarioLogado}",
+                                arguments = listOf(
+                                    navArgument("idDoSegmento") { type = NavType.StringType },
+                                    navArgument("tipoUsuarioLogado") { type = NavType.StringType }
+                                )
+                            ) { backStackEntry ->
+                                val idDoSegmento = backStackEntry.arguments?.getString("idDoSegmento") ?: return@composable
+                                val tipoUsuarioLogado = TipoUsuario.valueOf(backStackEntry.arguments?.getString("tipoUsuarioLogado") ?: "CLIENTE")
+                                val nomeDoSegmento = TipoSegmento.values().find { it.name == idDoSegmento }?.nomeExibicao ?: "Segmento"
+
+                                ChatScreen(
+                                    tipoChat = TipoChat.SEGMENTO,
+                                    chatId = idDoSegmento,
+                                    chatNome = nomeDoSegmento,
+                                    onVoltarClick = { navController.popBackStack() },
+                                    navController = navController,
+                                    tipoUsuarioLogado = tipoUsuarioLogado
+                                )
+                            }
+
+                            composable(
+                                route = "perfil/{usuarioId}/{tipoUsuarioLogado}",
+                                arguments = listOf(
+                                    navArgument("usuarioId") { type = NavType.StringType },
+                                    navArgument("tipoUsuarioLogado") { type = NavType.StringType }
+                                )
+                            ) { backStackEntry ->
+                                val usuarioId = backStackEntry.arguments?.getString("usuarioId")
+                                val tipoUsuarioLogadoString = backStackEntry.arguments?.getString("tipoUsuarioLogado")
+
+                                if (usuarioId != null && tipoUsuarioLogadoString != null) {
+                                    val tipoUsuarioLogado = TipoUsuario.valueOf(tipoUsuarioLogadoString)
+
+                                    PerfilScreen(
+                                        navController = navController,
+                                        usuarioId = usuarioId,
+                                        tipoUsuarioLogado = tipoUsuarioLogado
+                                    )
+                                }
+                            }
+
+                            InAppNotification(
+                                notificationInfo = ultimaMensagemInfo,
+                                onNotificationClick = { info ->
+                                    navegarParaNotificacao(info.chatId, info.collection, info.mensagem.remetenteId, info.mensagem.remetenteNome.ifBlank { info.titulo })
+                                    mainViewModel.dispensarNotificacao()
+                                },
+                                onDismiss = {
+                                    mainViewModel.dispensarNotificacao()
+                                }
+                            )
                         }
                     }
                 }
             }
         }
-    }
 
-    private fun solicitarPermissaoDeNotificacao() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val permissao = Manifest.permission.POST_NOTIFICATIONS
-            val jaPermitido = ContextCompat.checkSelfPermission(this, permissao) == PackageManager.PERMISSION_GRANTED
+        private fun navegarParaNotificacao(
+            chatId: String,
+            collection: String?,
+            remetenteId: String,
+            remetenteNome: String
+        ) {
+            if (!this::navController.isInitialized || chatId.isBlank()) return
 
-            if (!jaPermitido) {
-                ActivityCompat.requestPermissions(this, arrayOf(permissao), 1001)
+            val tipoUsuarioLogado = obterTipoUsuarioLogadoAtual()
+            val chatIdEncoded = Uri.encode(chatId)
+            val remetenteIdEncoded = Uri.encode(remetenteId)
+            val remetenteNomeEncoded = Uri.encode(remetenteNome.ifBlank { "Usuário" })
+
+            val rota = when (collection) {
+                "grupos" -> "chatGrupo/$chatIdEncoded/$tipoUsuarioLogado"
+                "segmentos" -> "chatSegmento/$chatIdEncoded/$tipoUsuarioLogado"
+                "chats1a1" -> "chat1a1/$remetenteIdEncoded/$remetenteNomeEncoded/$tipoUsuarioLogado"
+                else -> null
+            }
+
+            rota?.let {
+                Log.d("NotificationClick", "Navegando pela notificação in-app para: $it")
+                navController.navigate(it)
             }
         }
-    }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
-    }
-
-    @OptIn(UnstableApi::class)
-    private fun handleIntent(intent: Intent?) {
-        if (!this::navController.isInitialized) {
-            return
+        private fun obterTipoUsuarioLogadoAtual(): String {
+            val args = navController.currentBackStackEntry?.arguments
+            return args?.getString("tipoUsuarioLogado")
+                ?: args?.getString("tipoUsuario")
+                ?: "CLIENTE"
         }
 
-        val chatId = intent?.getStringExtra("chatId")
-        val collection = intent?.getStringExtra("collection")
+        private fun solicitarPermissaoDeNotificacao() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val permissao = Manifest.permission.POST_NOTIFICATIONS
+                val jaPermitido = ContextCompat.checkSelfPermission(this, permissao) == PackageManager.PERMISSION_GRANTED
 
-        if (chatId != null && collection != null) {
-            Log.d("NotificationClick", "Dados da notificação: collection=$collection, chatId=$chatId")
+                if (!jaPermitido) {
+                    ActivityCompat.requestPermissions(this, arrayOf(permissao), 1001)
+                }
+            }
+        }
 
-            val currentUser = Firebase.auth.currentUser
-            if (currentUser == null) {
-                Log.w("NotificationClick", "Usuário não logado, abortando navegação.")
+        override fun onNewIntent(intent: Intent) {
+            super.onNewIntent(intent)
+            handleIntent(intent)
+        }
+
+        @OptIn(UnstableApi::class)
+        private fun handleIntent(intent: Intent?) {
+            if (!this::navController.isInitialized) {
                 return
             }
 
-            val rotaNavegacao: String? = when (collection) {
-                "grupos", "segmentos" -> {
-                    val tipoUsuario = "OPERADOR"
-                    Log.d("NotificationClick", "Montando rota para $collection. Tipo de usuário assumido: $tipoUsuario")
+            val chatId = intent?.getStringExtra("chatId")
+            val collection = intent?.getStringExtra("collection")
 
-                    if (collection == "grupos") "chatGrupo/$chatId/$tipoUsuario"
-                    else "chatSegmento/$chatId/$tipoUsuario"
+            if (chatId != null && collection != null) {
+                Log.d("NotificationClick", "Dados da notificação: collection=$collection, chatId=$chatId")
+
+                val currentUser = Firebase.auth.currentUser
+                if (currentUser == null) {
+                    Log.w("NotificationClick", "Usuário não logado, abortando navegação.")
+                    return
                 }
-                "chats1a1" -> {
-                    val remetenteNome = intent.getStringExtra("remetenteNome") ?: "Usuário"
-                    val destinatarioId = chatId.replace(currentUser.uid, "").replace("_", "")
-                    Log.d("NotificationClick", "Montando rota para chat1a1.")
-                    "chat1a1/$destinatarioId/$remetenteNome/OPERADOR"
-                }
-                else -> {
-                    Log.w("NotificationClick", "Coleção desconhecida: $collection")
-                    null
-                }
+
+                val remetenteNome = intent.getStringExtra("remetenteNome") ?: "Usuário"
+                val remetenteId = intent.getStringExtra("remetenteId")
+                    ?: chatId.replace(currentUser.uid, "").replace("_", "")
+
+                navegarParaNotificacao(
+                    chatId = chatId,
+                    collection = collection,
+                    remetenteId = remetenteId,
+                    remetenteNome = remetenteNome
+                )
+
+                setIntent(Intent())
             }
-
-            rotaNavegacao?.let { rota ->
-                Log.i("NotificationClick", "Navegando para a rota: '$rota'")
-                navController.navigate(rota)
-            }
-
-            setIntent(Intent())
         }
     }
-}

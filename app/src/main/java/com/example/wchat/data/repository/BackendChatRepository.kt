@@ -77,8 +77,8 @@ class BackendChatRepository(context: Context) {
         }
     }
 
-    suspend fun marcarComoLida(mensagemId: String): Result<Mensagem> {
-        val response = api.marcarMensagemComoLida(mensagemId)
+    suspend fun marcarComoLida(mensagemId: String, usuarioId: String): Result<Mensagem> {
+        val response = api.marcarMensagemComoLidaPorUsuario(mensagemId, usuarioId)
         return if (response.isSuccessful && response.body() != null) Result.success(response.body()!!.toModel())
         else Result.failure(Exception("Erro ao marcar como lida: ${response.code()}"))
     }
@@ -112,4 +112,5 @@ private fun String.toDateOrNull(): Date? = try {
 } catch (_: Exception) {
     null
 }
+
 

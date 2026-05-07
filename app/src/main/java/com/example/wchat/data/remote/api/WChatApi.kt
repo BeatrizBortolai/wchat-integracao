@@ -102,6 +102,12 @@ interface WChatApi {
         @Path("mensagemId") mensagemId: String
     ): Response<MensagemResponseDto>
 
+    @PUT("mensagens/{mensagemId}/lida/{usuarioId}")
+    suspend fun marcarMensagemComoLidaPorUsuario(
+        @Path("mensagemId") mensagemId: String,
+        @Path("usuarioId") usuarioId: String
+    ): Response<MensagemResponseDto>
+
     @DELETE("mensagens/{mensagemId}")
     suspend fun excluirMensagemBackend(
         @Path("mensagemId") mensagemId: String
