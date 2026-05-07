@@ -1,20 +1,25 @@
 package com.example.wchat.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.repository.UsuarioRepository
+import com.example.wchat.data.repository.FirebaseAuthRepository
+import com.example.wchat.data.repository.UsuarioApiRepository
+import com.example.wchat.data.repository.toModel
 import com.example.wchat.model.Usuario
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
 enum class UpdateStatus { IDLE, SUCCESS, ERROR }
 
-class EditarPerfilViewModel(
-    private val usuarioRepository: UsuarioRepository = UsuarioRepository()
-) : ViewModel() {
+class EditarPerfilViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val usuarioApiRepository = UsuarioApiRepository(application.applicationContext)
+    private val firebaseAuthRepository = FirebaseAuthRepository()
 
     private val _usuario = MutableStateFlow<Usuario?>(null)
     val usuario = _usuario.asStateFlow()
@@ -29,26 +34,23 @@ class EditarPerfilViewModel(
     private fun carregarUsuarioLogado() {
         val usuarioId = Firebase.auth.currentUser?.uid ?: return
         viewModelScope.launch {
-            val usuarioCarregado = usuarioRepository.getUsuarioPorId(usuarioId)
-            _usuario.value = usuarioCarregado
+            usuarioApiRepository.buscarPorId(usuarioId)
+                .onSuccess { dto -> _usuario.value = dto.toModel() }
+                .onFailure { _updateStatus.value = UpdateStatus.ERROR }
         }
     }
 
-    fun salvarAlteracoes(
-        novoNome: String
-    ) {
+    fun salvarAlteracoes(novoNome: String) {
         val usuarioAtual = _usuario.value ?: return
         val nomeMudou = novoNome.isNotBlank() && novoNome != usuarioAtual.nome
-
         if (!nomeMudou) return
 
         viewModelScope.launch {
-            val resultado = usuarioRepository.atualizarNomeUsuario(usuarioAtual.id, novoNome)
+            val backendResult = usuarioApiRepository.atualizarUsuario(usuarioAtual.id, nome = novoNome)
+            val firebaseResult = firebaseAuthRepository.updateDisplayName(novoNome)
 
-            if (resultado.isSuccess) {
-                _usuario.update { currentUser ->
-                    currentUser?.copy(nome = novoNome)
-                }
+            if (backendResult.isSuccess && firebaseResult.isSuccess) {
+                _usuario.update { currentUser -> currentUser?.copy(nome = novoNome) }
                 _updateStatus.value = UpdateStatus.SUCCESS
             } else {
                 _updateStatus.value = UpdateStatus.ERROR
@@ -60,12 +62,8 @@ class EditarPerfilViewModel(
         if (novaSenha.isBlank() || senhaAtual.isBlank()) return
 
         viewModelScope.launch {
-            val resultado = usuarioRepository.atualizarSenhaUsuario(novaSenha, senhaAtual)
-            if (resultado.isSuccess) {
-                _updateStatus.value = UpdateStatus.SUCCESS
-            } else {
-                _updateStatus.value = UpdateStatus.ERROR
-            }
+            val resultado = firebaseAuthRepository.updatePassword(novaSenha, senhaAtual)
+            _updateStatus.value = if (resultado.isSuccess) UpdateStatus.SUCCESS else UpdateStatus.ERROR
         }
     }
 
@@ -77,36 +75,19 @@ class EditarPerfilViewModel(
 
         viewModelScope.launch {
             val usuarioId = Firebase.auth.currentUser?.uid
-
             if (usuarioId.isNullOrBlank()) {
                 _updateStatus.value = UpdateStatus.ERROR
                 return@launch
             }
 
-            val deleteBackendResult =
-                com.example.wchat.data.repository.UsuarioApiRepository(context)
-                    .deletarUsuario(usuarioId)
-
+            val deleteBackendResult = UsuarioApiRepository(context.applicationContext).deletarUsuario(usuarioId)
             if (deleteBackendResult.isFailure) {
-                android.util.Log.e(
-                    "DELETE_USUARIO",
-                    "Erro ao deletar no backend: ${deleteBackendResult.exceptionOrNull()?.message}"
-                )
                 _updateStatus.value = UpdateStatus.ERROR
                 return@launch
             }
 
-            val deleteFirebaseResult = usuarioRepository.deletarUsuario(senhaAtual)
-
-            if (deleteFirebaseResult.isSuccess) {
-                _updateStatus.value = UpdateStatus.SUCCESS
-            } else {
-                android.util.Log.e(
-                    "DELETE_USUARIO",
-                    "Erro ao deletar no Firebase: ${deleteFirebaseResult.exceptionOrNull()?.message}"
-                )
-                _updateStatus.value = UpdateStatus.ERROR
-            }
+            val deleteFirebaseResult = firebaseAuthRepository.deleteCurrentUser(senhaAtual)
+            _updateStatus.value = if (deleteFirebaseResult.isSuccess) UpdateStatus.SUCCESS else UpdateStatus.ERROR
         }
     }
 

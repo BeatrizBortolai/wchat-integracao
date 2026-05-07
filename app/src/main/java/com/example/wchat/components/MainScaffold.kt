@@ -1,6 +1,5 @@
 package com.example.wchat.components
 
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,9 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.wchat.model.Grupo
 import com.example.wchat.model.Notificacao
-import com.example.wchat.model.Segmento
 import com.example.wchat.model.TipoChat
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.screens.ChatScreen
@@ -45,8 +41,8 @@ import com.example.wchat.screens.SegmentosScreen
 import com.example.wchat.screens.SelecionarDestinatariosScreen
 import com.example.wchat.viewmodel.ConversasViewModel
 import com.example.wchat.viewmodel.GruposViewModel
-import com.example.wchat.viewmodel.MainViewModel
 import com.example.wchat.viewmodel.SegmentosViewModel
+import com.example.wchat.session.SessionManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import java.net.URLDecoder
@@ -56,33 +52,9 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario) {
     val conversasViewModel: ConversasViewModel = viewModel()
-    val mainViewModel: MainViewModel = viewModel()
     val gruposViewModel: GruposViewModel = viewModel()
     val segmentosViewModel: SegmentosViewModel = viewModel()
-    val grupoDoCliente by gruposViewModel.grupoDoCliente.collectAsState()
-    val segmentosDoCliente by segmentosViewModel.segmentosDoCliente.collectAsState()
-    val todosOsGrupos by gruposViewModel.grupos.collectAsState()
-    val todosOsSegmentos by segmentosViewModel.segmentos.collectAsState()
-
-    LaunchedEffect(tipoUsuario, grupoDoCliente, segmentosDoCliente, todosOsGrupos, todosOsSegmentos) {
-        val gruposParaOuvinte: List<Grupo>
-        val segmentosParaOuvinte: List<Segmento>
-
-        if (tipoUsuario == TipoUsuario.CLIENTE) {
-            Log.d("MainScaffold", "Iniciando listener para CLIENTE.")
-            gruposParaOuvinte = if (grupoDoCliente != null) listOf(grupoDoCliente!!) else emptyList()
-            segmentosParaOuvinte = segmentosDoCliente
-        } else {
-            Log.d("MainScaffold", "Iniciando listener para OPERADOR/ADMIN.")
-            gruposParaOuvinte = todosOsGrupos
-            segmentosParaOuvinte = todosOsSegmentos
-        }
-
-        mainViewModel.iniciarOuvinteDeNotificacao(
-            gruposAtuais = gruposParaOuvinte,
-            segmentosAtuais = segmentosParaOuvinte
-        )
-    }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val bottomNavController = rememberNavController()
     var mostrandoBusca by remember { mutableStateOf(false) }
@@ -130,6 +102,7 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
                                             onClick = {
                                                 menuAberto = false
                                                 Firebase.auth.signOut()
+                                                SessionManager(context).clearSession()
                                                 mainNavController.navigate("telaInicial") {
                                                     popUpTo(0) { inclusive = true }
                                                 }

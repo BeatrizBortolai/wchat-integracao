@@ -271,6 +271,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     private fun navegarParaNotificacao(
         chatId: String,
         collection: String?,

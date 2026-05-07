@@ -15,22 +15,27 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-class AuthIntegrationRepository(
-    context: Context
-) {
+class AuthIntegrationRepository(context: Context) {
+
     private val api: WChatApi = RetrofitProvider
         .create(context)
         .create(WChatApi::class.java)
 
     private val sessionManager = SessionManager(context)
 
+    /**
+     * Sincroniza o usuário autenticado no Firebase com o backend.
+     *
+     * Para login de usuário já existente, envie cargo/segmentos como null para não sobrescrever
+     * vínculos já salvos no Mongo. Para cadastro, envie os valores selecionados no formulário.
+     */
     suspend fun syncAuthenticatedFirebaseUser(
         nome: String,
         email: String,
         password: String,
         tipo: String,
         cargo: String?,
-        segmentos: List<String>
+        segmentos: List<String>?
     ): Result<AuthSession> {
         return try {
             val firebaseUser = FirebaseAuth.getInstance().currentUser
@@ -50,9 +55,6 @@ class AuthIntegrationRepository(
 
             if (response.isSuccessful && response.body() != null) {
                 val authSession = response.body()!!.toDomain()
-
-                Log.d("TOKEN", authSession.token)
-
                 sessionManager.saveJwtToken(authSession.token)
                 sessionManager.saveBackendUserId(authSession.usuarioId)
                 Result.success(authSession)
@@ -78,6 +80,7 @@ class AuthIntegrationRepository(
             )
 
             if (response.isSuccessful) {
+                Log.d("FCM", "Token FCM enviado ao backend com sucesso.")
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Erro ao enviar FCM token: ${response.code()}"))
@@ -90,11 +93,7 @@ class AuthIntegrationRepository(
     private suspend fun getFirebaseMessagingToken(): String =
         suspendCancellableCoroutine { continuation ->
             FirebaseMessaging.getInstance().token
-                .addOnSuccessListener { token ->
-                    continuation.resume(token)
-                }
-                .addOnFailureListener { error ->
-                    continuation.resumeWithException(error)
-                }
+                .addOnSuccessListener { token -> continuation.resume(token) }
+                .addOnFailureListener { error -> continuation.resumeWithException(error) }
         }
 }

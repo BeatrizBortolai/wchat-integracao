@@ -1,19 +1,20 @@
 package com.example.wchat.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.repository.UsuarioRepository
+import com.example.wchat.data.repository.AuthIntegrationRepository
+import com.example.wchat.data.repository.FirebaseAuthRepository
+import com.example.wchat.data.repository.UsuarioApiRepository
+import com.example.wchat.data.repository.toModel
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.model.Usuario
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import android.content.Context
-import com.example.wchat.data.repository.AuthIntegrationRepository
-import com.example.wchat.data.repository.UsuarioApiRepository
 
 data class LoginUiState(
     val email: String = "",
@@ -28,14 +29,13 @@ sealed class LoginEvento {
 
 class LoginViewModel : ViewModel() {
 
-    private val repository = UsuarioRepository()
+    private val firebaseAuthRepository = FirebaseAuthRepository()
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
     private val _evento = MutableSharedFlow<LoginEvento>()
     val evento = _evento.asSharedFlow()
-
 
     fun onEmailChange(novoEmail: String) {
         uiState = uiState.copy(email = novoEmail)
@@ -54,62 +54,74 @@ class LoginViewModel : ViewModel() {
 
             uiState = uiState.copy(isLoading = true)
 
-            val resultado = repository.loginUsuario(uiState.email, uiState.senha)
-
-            resultado.onSuccess { usuarioLogado ->
-                if (usuarioLogado.tipo == tipoUsuarioNaTela) {
-                    val authIntegrationRepository = AuthIntegrationRepository(context)
+            firebaseAuthRepository.signIn(uiState.email, uiState.senha)
+                .onSuccess { firebaseUser ->
+                    val authIntegrationRepository = AuthIntegrationRepository(context.applicationContext)
+                    val nomeFirebase = firebaseUser.displayName
+                        ?: firebaseUser.email?.substringBefore("@")
+                        ?: "Usuário"
+                    val emailFirebase = firebaseUser.email ?: uiState.email
 
                     val syncResult = authIntegrationRepository.syncAuthenticatedFirebaseUser(
-                        nome = usuarioLogado.nome,
-                        email = usuarioLogado.email,
+                        nome = nomeFirebase,
+                        email = emailFirebase,
                         password = uiState.senha,
-                        tipo = usuarioLogado.tipo.name,
-                        cargo = usuarioLogado.cargo,
-                        segmentos = usuarioLogado.segmentos
+                        tipo = tipoUsuarioNaTela.name,
+                        cargo = null,
+                        segmentos = null
                     )
 
-                    if (syncResult.isSuccess) {
-                        val authSession = syncResult.getOrThrow()
+                    syncResult
+                        .onSuccess { authSession ->
+                            authIntegrationRepository.sendFcmTokenToBackend()
 
-                        authIntegrationRepository.sendFcmTokenToBackend()
+                            val usuarioBackendResult = UsuarioApiRepository(context.applicationContext)
+                                .buscarPorId(authSession.usuarioId)
 
-                        val usuarioApiRepository = UsuarioApiRepository(context)
-                        val usuarioBackend = usuarioApiRepository.buscarPorId(authSession.usuarioId)
+                            usuarioBackendResult
+                                .onSuccess { usuarioDto ->
+                                    val usuarioLogado = usuarioDto.toModel()
 
-                        usuarioBackend.onSuccess {
-                            android.util.Log.d("USUARIO_API", "Usuário backend: $it")
+                                    if (usuarioLogado.tipo != tipoUsuarioNaTela) {
+                                        firebaseAuthRepository.signOut()
+                                        uiState = uiState.copy(isLoading = false)
+                                        _evento.emit(
+                                            LoginEvento.Erro(
+                                                "Login falhou. Verifique o tipo de usuário selecionado (Cliente/Operador)."
+                                            )
+                                        )
+                                        return@launch
+                                    }
+
+                                    uiState = uiState.copy(isLoading = false)
+                                    _evento.emit(LoginEvento.Sucesso(usuarioLogado))
+                                }
+                                .onFailure { erro ->
+                                    uiState = uiState.copy(isLoading = false)
+                                    _evento.emit(
+                                        LoginEvento.Erro(
+                                            erro.message ?: "Login feito, mas falhou ao carregar usuário no backend."
+                                        )
+                                    )
+                                }
                         }
-
-                        usuarioBackend.onFailure {
-                            android.util.Log.e("USUARIO_API", "Erro usuário backend: ${it.message}")
-                        }
-
-                        uiState = uiState.copy(isLoading = false)
-                        _evento.emit(LoginEvento.Sucesso(usuarioLogado))
-                    } else {
-                        uiState = uiState.copy(isLoading = false)
-                        _evento.emit(
-                            LoginEvento.Erro(
-                                syncResult.exceptionOrNull()?.message
-                                    ?: "Login feito, mas falhou ao sincronizar com o backend."
+                        .onFailure { erro ->
+                            uiState = uiState.copy(isLoading = false)
+                            _evento.emit(
+                                LoginEvento.Erro(
+                                    erro.message ?: "Login feito, mas falhou ao sincronizar com o backend."
+                                )
                             )
-                        )
-                    }
-                } else {
+                        }
+                }
+                .onFailure { exception ->
                     uiState = uiState.copy(isLoading = false)
-                    _evento.emit(LoginEvento.Erro("Login falhou. Verifique o tipo de usuário selecionado (Cliente/Operador)."))
+                    val mensagemErro = when {
+                        "INVALID_LOGIN_CREDENTIALS" in (exception.message ?: "") -> "E-mail ou senha inválidos."
+                        else -> exception.message ?: "Falha no login. Tente novamente."
+                    }
+                    _evento.emit(LoginEvento.Erro(mensagemErro))
                 }
-            }
-
-            resultado.onFailure { exception ->
-                uiState = uiState.copy(isLoading = false)
-                val mensagemErro = when {
-                    "INVALID_LOGIN_CREDENTIALS" in (exception.message ?: "") -> "E-mail ou senha inválidos."
-                    else -> "Falha no login. Tente novamente."
-                }
-                _evento.emit(LoginEvento.Erro(mensagemErro))
-            }
         }
     }
 }

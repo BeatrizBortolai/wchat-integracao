@@ -52,7 +52,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.values
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.wchat.model.TipoGrupo
@@ -71,13 +70,13 @@ fun PerfilScreen(
     usuarioId: String,
     tipoUsuarioLogado: TipoUsuario
 ) {
-    val viewModel: PerfilViewModel = viewModel(factory = PerfilViewModelFactory(usuarioId))
+    val context = LocalContext.current
+    val viewModel: PerfilViewModel = viewModel(factory = PerfilViewModelFactory(usuarioId, context))
     val usuario by viewModel.usuario.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val anotacoesSalvas by viewModel.anotacoesSalvas.collectAsState()
 
     var anotacoesText by remember(usuario) { mutableStateOf(usuario?.anotacoesOperador ?: "") }
-    val context = LocalContext.current
 
     LaunchedEffect(anotacoesSalvas) {
         if (anotacoesSalvas) {

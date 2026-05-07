@@ -7,5 +7,6 @@ data class UsuarioResponseDto(
     val tipo: String,
     val cargo: String?,
     val segmentos: List<String>?,
-    val fcmToken: String?
+    val anotacoesOperador: String? = null,
+    val fcmToken: String? = null
 )

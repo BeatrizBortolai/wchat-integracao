@@ -1,11 +1,13 @@
 package com.example.wchat.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.repository.UsuarioRepository
+import com.example.wchat.data.repository.AuthIntegrationRepository
+import com.example.wchat.data.repository.FirebaseAuthRepository
 import com.example.wchat.model.TipoGrupo
 import com.example.wchat.model.TipoSegmento
 import com.example.wchat.model.TipoUsuario
@@ -29,6 +31,9 @@ sealed class CadastroEvento {
 }
 
 class CadastroViewModel : ViewModel() {
+
+    private val firebaseAuthRepository = FirebaseAuthRepository()
+
     var uiState by mutableStateOf(CadastroUiState())
         private set
 
@@ -69,25 +74,18 @@ class CadastroViewModel : ViewModel() {
         uiState = uiState.copy(segmentosSelecionados = novaLista)
     }
 
-    fun registrar(tipoUsuario: TipoUsuario, context: android.content.Context) {
+    fun registrar(tipoUsuario: TipoUsuario, context: Context) {
         viewModelScope.launch {
             if (!validarCampos(tipoUsuario)) return@launch
 
             uiState = uiState.copy(isLoading = true)
 
-            val usuarioRepository = UsuarioRepository()
-            val authIntegrationRepository = com.example.wchat.data.repository.AuthIntegrationRepository(context)
-
-            val resultado = usuarioRepository.registrarUsuario(
+            firebaseAuthRepository.createUser(
                 nome = uiState.nome,
                 email = uiState.email,
-                password = uiState.senha,
-                tipo = tipoUsuario,
-                cargo = uiState.grupoSelecionado?.name,
-                segmentos = uiState.segmentosSelecionados.map { it.name }
-            )
-
-            resultado.onSuccess {
+                password = uiState.senha
+            ).onSuccess {
+                val authIntegrationRepository = AuthIntegrationRepository(context.applicationContext)
                 val syncResult = authIntegrationRepository.syncAuthenticatedFirebaseUser(
                     nome = uiState.nome,
                     email = uiState.email,
@@ -97,22 +95,21 @@ class CadastroViewModel : ViewModel() {
                     segmentos = uiState.segmentosSelecionados.map { it.name }
                 )
 
-                if (syncResult.isSuccess) {
-                    authIntegrationRepository.sendFcmTokenToBackend()
-                    uiState = uiState.copy(isLoading = false)
-                    _evento.emit(CadastroEvento.Sucesso("Cadastro realizado!"))
-                } else {
-                    uiState = uiState.copy(isLoading = false)
-                    _evento.emit(
-                        CadastroEvento.Erro(
-                            syncResult.exceptionOrNull()?.message
-                                ?: "Cadastro feito, mas falhou ao sincronizar com o backend."
+                syncResult
+                    .onSuccess {
+                        authIntegrationRepository.sendFcmTokenToBackend()
+                        uiState = uiState.copy(isLoading = false)
+                        _evento.emit(CadastroEvento.Sucesso("Cadastro realizado!"))
+                    }
+                    .onFailure { erro ->
+                        uiState = uiState.copy(isLoading = false)
+                        _evento.emit(
+                            CadastroEvento.Erro(
+                                erro.message ?: "Cadastro feito, mas falhou ao sincronizar com o backend."
+                            )
                         )
-                    )
-                }
-            }
-
-            resultado.onFailure { exception ->
+                    }
+            }.onFailure { exception ->
                 uiState = uiState.copy(isLoading = false)
                 _evento.emit(CadastroEvento.Erro(exception.message ?: "Falha desconhecida no cadastro"))
             }

@@ -25,22 +25,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.wchat.data.repository.UsuarioRepository
+import com.example.wchat.R
+import com.example.wchat.data.repository.UsuarioApiRepository
+import com.example.wchat.session.SessionManager
 import com.example.wchat.ui.theme.Barlow
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import com.example.wchat.R
 
 @Composable
 fun SplashScreen(navController: NavController) {
     var startAnimation by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val alphaAnim by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
@@ -52,7 +54,7 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(startAnimation) {
         if (startAnimation) {
             scaleAnim.animateTo(
-                targetValue = 1.1f, // Aumenta para 110%
+                targetValue = 1.1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(durationMillis = 1000),
                     repeatMode = RepeatMode.Reverse
@@ -61,31 +63,40 @@ fun SplashScreen(navController: NavController) {
         }
     }
 
-    LaunchedEffect(key1 = true) {
+    LaunchedEffect(Unit) {
         startAnimation = true
-        delay(3000)
+        delay(1500)
 
         val firebaseUser = Firebase.auth.currentUser
-        if (firebaseUser != null) {
-            val repository = UsuarioRepository()
-            this.launch {
-                val usuario = repository.getUsuarioPorId(firebaseUser.uid)
-                if (usuario != null) {
-                    navController.navigate("main/${usuario.tipo.name}") {
-                        popUpTo("splash") { inclusive = true }
-                    }
-                } else {
-                    Firebase.auth.signOut()
-                    navController.navigate("telaInicial") {
-                        popUpTo("splash") { inclusive = true }
-                    }
-                }
-            }
-        } else {
+        val sessionManager = SessionManager(context.applicationContext)
+        val backendUserId = sessionManager.getBackendUserId()
+        val jwtToken = sessionManager.getJwtToken()
+
+        if (firebaseUser == null || backendUserId.isNullOrBlank() || jwtToken.isNullOrBlank()) {
+            Firebase.auth.signOut()
+            sessionManager.clearSession()
             navController.navigate("telaInicial") {
                 popUpTo("splash") { inclusive = true }
             }
+            return@LaunchedEffect
         }
+
+        val usuarioResult = UsuarioApiRepository(context.applicationContext)
+            .buscarUsuarioModelPorId(backendUserId)
+
+        usuarioResult
+            .onSuccess { usuario ->
+                navController.navigate("main/${usuario.tipo.name}") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            }
+            .onFailure {
+                Firebase.auth.signOut()
+                sessionManager.clearSession()
+                navController.navigate("telaInicial") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            }
     }
 
     Column(

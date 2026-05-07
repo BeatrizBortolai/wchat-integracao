@@ -7,5 +7,5 @@ data class AuthSyncRequestDto(
     val password: String,
     val tipo: String,
     val cargo: String?,
-    val segmentos: List<String>
+    val segmentos: List<String>?
 )
