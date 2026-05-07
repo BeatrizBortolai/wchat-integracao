@@ -11,11 +11,15 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.wchat.MainActivity
 import com.example.wchat.R
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
+import com.example.wchat.data.remote.api.RetrofitProvider
+import com.example.wchat.data.remote.api.WChatApi
+import com.example.wchat.data.remote.dto.FcmTokenRequestDto
+import com.example.wchat.session.SessionManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -24,39 +28,59 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         Log.d("FCM", "Mensagem recebida de: ${remoteMessage.from}")
 
-        if (AppLifecycleTracker.isForeground()) {
-            Log.d("FCM", "App está em primeiro plano. Suprimindo notificação de sistema (push).")
-            return
-        }
-
         val data = remoteMessage.data
         if (data.isNotEmpty()) {
             Log.d("FCM", "Payload de Dados: $data")
         }
 
-        val title = data["title"]
-        val body = data["body"]
+        val title = data["title"] ?: remoteMessage.notification?.title ?: "Nova mensagem"
+        val body = data["body"] ?: remoteMessage.notification?.body ?: "Você recebeu uma nova mensagem."
 
-        if (title != null && body != null) {
-            sendNotification(title, body, data)
-        } else {
-            Log.w("FCM", "Título ou corpo da notificação ausentes no payload de dados.")
+        if (AppLifecycleTracker.isForeground()) {
+            Log.d("FCM", "App em primeiro plano. Mostrando popup in-app.")
+            InAppNotificationManager.show(
+                InAppNotificationEvent(
+                    title = title,
+                    body = body,
+                    chatId = data["chatId"],
+                    collection = data["collection"],
+                    remetenteId = data["remetenteId"],
+                    remetenteNome = data["remetenteNome"]
+                )
+            )
+            return
         }
+
+        sendNotification(title, body, data)
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "Novo Token gerado: $token")
-        sendTokenToServer(token)
+        sendTokenToBackend(token)
     }
 
-    private fun sendTokenToServer(token: String?) {
-        val userId = Firebase.auth.currentUser?.uid
-        if (userId != null && token != null) {
-            Firebase.firestore.collection("usuarios").document(userId)
-                .update("fcmToken", token)
-                .addOnSuccessListener { Log.d("FCM", "Token atualizado no Firestore com sucesso.") }
-                .addOnFailureListener { e -> Log.w("FCM", "Falha ao atualizar o token.", e) }
+    private fun sendTokenToBackend(token: String) {
+        val sessionManager = SessionManager(this)
+        val usuarioId = sessionManager.getBackendUserId()
+
+        if (usuarioId.isNullOrBlank()) {
+            Log.w("FCM", "Não foi possível enviar token: usuário backend ausente na sessão.")
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val api = RetrofitProvider.create(this@MyFirebaseMessagingService).create(WChatApi::class.java)
+                val response = api.atualizarFcmToken(usuarioId, FcmTokenRequestDto(token))
+                if (response.isSuccessful) {
+                    Log.d("FCM", "Token FCM enviado ao backend com sucesso.")
+                } else {
+                    Log.w("FCM", "Falha ao enviar token FCM ao backend: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("FCM", "Erro ao enviar token FCM ao backend.", e)
+            }
         }
     }
 
@@ -79,6 +103,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("chatId", data["chatId"])
             putExtra("collection", data["collection"])
+            putExtra("remetenteId", data["remetenteId"])
             putExtra("remetenteNome", data["remetenteNome"])
         }
 
@@ -89,16 +114,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val finalTitle = title
-        val finalBody = messageBody
-        val finalStyle: NotificationCompat.Style = NotificationCompat.BigTextStyle().bigText(messageBody)
-
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_wchat_notification)
-            .setContentTitle(finalTitle)
-            .setContentText(finalBody)
-            .setStyle(finalStyle)
+            .setContentTitle(title)
+            .setContentText(messageBody)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)

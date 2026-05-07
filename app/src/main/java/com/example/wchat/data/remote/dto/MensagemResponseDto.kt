@@ -6,6 +6,7 @@ data class MensagemResponseDto(
     val remetenteNome: String = "",
     val destinatarioId: String? = null,
     val grupoId: String? = null,
+    val segmentoId: String? = null,
     val texto: String = "",
     val tipoMensagem: String = "TEXT",
     val urlAnexo: String? = null,

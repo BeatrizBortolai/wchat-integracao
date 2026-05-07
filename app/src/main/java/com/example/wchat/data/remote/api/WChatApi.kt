@@ -87,6 +87,11 @@ interface WChatApi {
         @Path("grupoId") grupoId: String
     ): Response<List<MensagemResponseDto>>
 
+    @GET("mensagens/segmento/{segmentoId}")
+    suspend fun buscarMensagensDoSegmento(
+        @Path("segmentoId") segmentoId: String
+    ): Response<List<MensagemResponseDto>>
+
     @GET("mensagens/conversas/{usuarioId}")
     suspend fun buscarConversas(
         @Path("usuarioId") usuarioId: String

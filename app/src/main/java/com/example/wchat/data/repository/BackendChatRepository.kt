@@ -67,7 +67,7 @@ class BackendChatRepository(context: Context) {
                 api.buscarMensagensDiretas(remetenteId, outroUsuarioId)
             }
             TipoChat.GRUPO -> api.buscarMensagensDoGrupo(chatId)
-            TipoChat.SEGMENTO -> return Result.success(emptyList())
+            TipoChat.SEGMENTO -> api.buscarMensagensDoSegmento(chatId)
         }
 
         return if (response.isSuccessful) {
