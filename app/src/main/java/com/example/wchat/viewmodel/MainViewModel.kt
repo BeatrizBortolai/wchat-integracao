@@ -45,6 +45,7 @@ class MainViewModel : ViewModel() {
             InAppNotificationManager.events.collect { event ->
                 val chatId = event.chatId.orEmpty()
                 val collection = event.collection
+                val collectionNormalizada = collection?.lowercase()
                 val remetenteNome = event.remetenteNome ?: event.title
                 val corpoMensagem = event.body
 
@@ -53,7 +54,7 @@ class MainViewModel : ViewModel() {
                     return@collect
                 }
 
-                val tituloPopup = when (collection) {
+                val tituloPopup = when (collectionNormalizada) {
                     "grupos" -> event.chatNome ?: "Grupo $chatId"
                     "segmentos" -> event.chatNome ?: "Segmento $chatId"
                     "chats1a1" -> remetenteNome
@@ -64,7 +65,7 @@ class MainViewModel : ViewModel() {
 
                 val descricaoPopup = when {
                     isCampanha -> corpoMensagem
-                    collection == "grupos" || collection == "segmentos" -> {
+                    collectionNormalizada == "grupos" || collectionNormalizada == "segmentos" -> {
                         if (corpoMensagem.startsWith("$remetenteNome:")) {
                             corpoMensagem
                         } else {
