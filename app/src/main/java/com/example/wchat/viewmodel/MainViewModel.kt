@@ -55,8 +55,8 @@ class MainViewModel : ViewModel() {
                 }
 
                 val tituloPopup = when (collectionNormalizada) {
-                    "grupos" -> event.chatNome ?: "Grupo $chatId"
-                    "segmentos" -> event.chatNome ?: "Segmento $chatId"
+                    "grupos" -> formatarNomeColetivo(prefixo = "Grupo", nome = event.chatNome, id = chatId)
+                    "segmentos" -> formatarNomeColetivo(prefixo = "Segmento", nome = event.chatNome, id = chatId)
                     "chats1a1" -> remetenteNome
                     else -> event.chatNome ?: event.title
                 }
@@ -92,6 +92,16 @@ class MainViewModel : ViewModel() {
 
                 iniciarTimerParaDispensar()
             }
+        }
+    }
+
+
+    private fun formatarNomeColetivo(prefixo: String, nome: String?, id: String): String {
+        val base = nome?.takeIf { it.isNotBlank() } ?: id
+        return if (base.startsWith("$prefixo ", ignoreCase = true)) {
+            base
+        } else {
+            "$prefixo $base"
         }
     }
 

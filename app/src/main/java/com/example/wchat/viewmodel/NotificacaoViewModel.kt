@@ -159,14 +159,28 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
 
             _destinatariosState.value = _destinatariosState.value.copy(isEnviando = true, error = null)
 
-            try {
-                val usuariosSelecionados = destinatariosParaEnviar
-                    .filterIsInstance<Usuario>()
-                    .map { it.id }
-                    .filter { it.isNotBlank() }
-                    .distinct()
+            val falhas = mutableListOf<String>()
+            var enviosComSucesso = 0
 
-                if (usuariosSelecionados.isNotEmpty()) {
+            suspend fun enviarERegistrarErro(
+                descricaoDestino: String,
+                bloco: suspend () -> Result<*>
+            ) {
+                bloco()
+                    .onSuccess { enviosComSucesso++ }
+                    .onFailure { erro ->
+                        falhas += "$descricaoDestino: ${erro.message ?: "erro desconhecido"}"
+                    }
+            }
+
+            val usuariosSelecionados = destinatariosParaEnviar
+                .filterIsInstance<Usuario>()
+                .map { it.id }
+                .filter { it.isNotBlank() }
+                .distinct()
+
+            if (usuariosSelecionados.isNotEmpty()) {
+                enviarERegistrarErro("usuários selecionados") {
                     notificacaoRepository.enviarCampanha(
                         titulo = notificacao.titulo,
                         descricao = notificacao.descricao,
@@ -177,11 +191,18 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
                         linkEvento = notificacao.linkEvento.ifBlank { null },
                         urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
                         urlInscrever = notificacao.urlInscrever.ifBlank { null }
-                    ).getOrThrow()
+                    )
+                }
+            }
+
+            destinatariosParaEnviar.filterIsInstance<Grupo>().forEach { grupo ->
+                val grupoId = (grupo.tipo?.name ?: grupo.id).trim().uppercase()
+                if (grupoId.isBlank()) {
+                    falhas += "grupo inválido: identificador vazio"
+                    return@forEach
                 }
 
-                destinatariosParaEnviar.filterIsInstance<Grupo>().forEach { grupo ->
-                    val grupoId = grupo.tipo?.name ?: grupo.id
+                enviarERegistrarErro("grupo $grupoId") {
                     notificacaoRepository.enviarCampanha(
                         titulo = notificacao.titulo,
                         descricao = notificacao.descricao,
@@ -192,11 +213,18 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
                         linkEvento = notificacao.linkEvento.ifBlank { null },
                         urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
                         urlInscrever = notificacao.urlInscrever.ifBlank { null }
-                    ).getOrThrow()
+                    )
+                }
+            }
+
+            destinatariosParaEnviar.filterIsInstance<Segmento>().forEach { segmento ->
+                val segmentoId = (segmento.tipo?.name ?: segmento.id).trim().uppercase()
+                if (segmentoId.isBlank()) {
+                    falhas += "segmento inválido: identificador vazio"
+                    return@forEach
                 }
 
-                destinatariosParaEnviar.filterIsInstance<Segmento>().forEach { segmento ->
-                    val segmentoId = segmento.tipo?.name ?: segmento.id
+                enviarERegistrarErro("segmento $segmentoId") {
                     notificacaoRepository.enviarCampanha(
                         titulo = notificacao.titulo,
                         descricao = notificacao.descricao,
@@ -207,16 +235,26 @@ class NotificacaoViewModel(application: Application) : AndroidViewModel(applicat
                         linkEvento = notificacao.linkEvento.ifBlank { null },
                         urlSaberMais = notificacao.urlSaberMais.ifBlank { null },
                         urlInscrever = notificacao.urlInscrever.ifBlank { null }
-                    ).getOrThrow()
+                    )
                 }
+            }
 
+            if (enviosComSucesso > 0) {
                 _destinatariosState.value = _destinatariosState.value.copy(
                     isEnviando = false,
-                    envioConcluido = true
+                    envioConcluido = true,
+                    error = null
                 )
-                _evento.emit(NotificacaoEvento.SucessoEnvio("Campanha enviada com sucesso!"))
-            } catch (e: Exception) {
-                val mensagemErro = "Falha ao enviar: ${e.message}"
+
+                val mensagem = if (falhas.isEmpty()) {
+                    "Campanha enviada com sucesso!"
+                } else {
+                    "Campanha enviada parcialmente. Falhas: ${falhas.joinToString("; ")}"
+                }
+
+                _evento.emit(NotificacaoEvento.SucessoEnvio(mensagem))
+            } else {
+                val mensagemErro = "Falha ao enviar campanha: ${falhas.joinToString("; ").ifBlank { "nenhum envio realizado" }}"
                 _destinatariosState.value = _destinatariosState.value.copy(
                     isEnviando = false,
                     error = mensagemErro
