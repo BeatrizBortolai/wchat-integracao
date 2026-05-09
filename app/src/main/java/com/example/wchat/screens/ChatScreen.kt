@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -154,12 +157,18 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            BarraDeEnvioDeMensagem(
-                onEnviarClick = { texto ->
-                    val idEnvio = UUID.randomUUID().toString()
-                    viewModel.enviarMensagem(texto, idEnvio)
+            Column {
+                if (tipoUsuarioLogado == TipoUsuario.CLIENTE && tipoChat != TipoChat.UM_A_UM) {
+                    CanalColetivoClienteInfo(tipoChat = tipoChat)
                 }
-            )
+
+                BarraDeEnvioDeMensagem(
+                    onEnviarClick = { texto ->
+                        val idEnvio = UUID.randomUUID().toString()
+                        viewModel.enviarMensagem(texto, idEnvio)
+                    }
+                )
+            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -234,6 +243,31 @@ fun ChatScreen(
                     Text("Cancelar")
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun CanalColetivoClienteInfo(tipoChat: TipoChat) {
+    val nomeCanal = when (tipoChat) {
+        TipoChat.GRUPO -> "grupo"
+        TipoChat.SEGMENTO -> "segmento"
+        TipoChat.UM_A_UM -> "chat"
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Text(
+            text = "Mensagem enviada neste $nomeCanal também será encaminhada aos operadores.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
     }
 }
