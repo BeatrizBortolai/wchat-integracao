@@ -80,13 +80,22 @@ class EditarPerfilViewModel(application: Application) : AndroidViewModel(applica
                 return@launch
             }
 
-            val deleteBackendResult = UsuarioApiRepository(context.applicationContext).deletarUsuario(usuarioId)
+            // 1) Primeiro valida a senha no Firebase, sem alterar o backend.
+            val reauthResult = firebaseAuthRepository.reauthenticateCurrentUser(senhaAtual)
+            if (reauthResult.isFailure) {
+                _updateStatus.value = UpdateStatus.ERROR
+                return@launch
+            }
+
+            // 2) Só depois remove o usuário no backend, incluindo vínculos de grupos/segmentos.
+            val deleteBackendResult = usuarioApiRepository.deletarUsuario(usuarioId)
             if (deleteBackendResult.isFailure) {
                 _updateStatus.value = UpdateStatus.ERROR
                 return@launch
             }
 
-            val deleteFirebaseResult = firebaseAuthRepository.deleteCurrentUser(senhaAtual)
+            // 3) Por fim remove a conta Firebase usando a reautenticação recente.
+            val deleteFirebaseResult = firebaseAuthRepository.deleteCurrentUserAfterRecentLogin()
             _updateStatus.value = if (deleteFirebaseResult.isSuccess) UpdateStatus.SUCCESS else UpdateStatus.ERROR
         }
     }

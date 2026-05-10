@@ -9,11 +9,14 @@ import com.example.wchat.data.repository.UsuarioApiRepository
 import com.example.wchat.model.Grupo
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class GruposViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,30 +26,46 @@ class GruposViewModel(application: Application) : AndroidViewModel(application) 
     private val _uiState = MutableStateFlow(GruposUiState())
     val uiState: StateFlow<GruposUiState> = _uiState
 
+    private var gruposJob: Job? = null
+
     init {
-        carregarGrupos()
+        iniciarAtualizacaoDeGrupos()
     }
 
     fun carregarGrupos() {
         viewModelScope.launch {
-            val usuarioAtualId = Firebase.auth.currentUser?.uid
-            val gruposResult = catalogRepository.listarGrupos()
-            val cargoUsuario = usuarioAtualId?.let { id ->
-                usuarioRepository.buscarPorId(id).getOrNull()?.cargo
-            }
-
-            gruposResult
-                .onSuccess { grupos ->
-                    _uiState.value = GruposUiState(
-                        todosOsGrupos = grupos,
-                        idGrupoDoUsuario = cargoUsuario
-                    )
-                }
-                .onFailure { e ->
-                    Log.e("GruposVM", "Erro ao carregar grupos pelo backend", e)
-                    _uiState.value = GruposUiState()
-                }
+            carregarGruposInterno()
         }
+    }
+
+    private fun iniciarAtualizacaoDeGrupos() {
+        gruposJob?.cancel()
+        gruposJob = viewModelScope.launch {
+            while (isActive) {
+                carregarGruposInterno()
+                delay(3000)
+            }
+        }
+    }
+
+    private suspend fun carregarGruposInterno() {
+        val usuarioAtualId = Firebase.auth.currentUser?.uid
+        val gruposResult = catalogRepository.listarGrupos()
+        val cargoUsuario = usuarioAtualId?.let { id ->
+            usuarioRepository.buscarPorId(id).getOrNull()?.cargo
+        }
+
+        gruposResult
+            .onSuccess { grupos ->
+                _uiState.value = GruposUiState(
+                    todosOsGrupos = grupos,
+                    idGrupoDoUsuario = cargoUsuario
+                )
+            }
+            .onFailure { e ->
+                Log.e("GruposVM", "Erro ao carregar grupos pelo backend", e)
+                _uiState.value = GruposUiState()
+            }
     }
 
     val grupos: StateFlow<List<Grupo>> = uiState
@@ -66,6 +85,11 @@ class GruposViewModel(application: Application) : AndroidViewModel(application) 
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+
+    override fun onCleared() {
+        super.onCleared()
+        gruposJob?.cancel()
+    }
 }
 
 data class GruposUiState(

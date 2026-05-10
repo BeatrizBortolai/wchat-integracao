@@ -10,11 +10,14 @@ import com.example.wchat.data.repository.UsuarioApiRepository
 import com.example.wchat.model.Segmento
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -25,30 +28,46 @@ class SegmentosViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(SegmentosUiState())
     val uiState: StateFlow<SegmentosUiState> = _uiState
 
+    private var segmentosJob: Job? = null
+
     init {
-        carregarSegmentos()
+        iniciarAtualizacaoDeSegmentos()
     }
 
     fun carregarSegmentos() {
         viewModelScope.launch {
-            val usuarioAtualId = Firebase.auth.currentUser?.uid
-            val segmentosResult = catalogRepository.listarSegmentos()
-            val segmentosDoUsuario = usuarioAtualId?.let { id ->
-                usuarioRepository.buscarPorId(id).getOrNull()?.segmentos.orEmpty()
-            }.orEmpty()
-
-            segmentosResult
-                .onSuccess { segmentos ->
-                    _uiState.value = SegmentosUiState(
-                        todosOsSegmentos = segmentos,
-                        idsSegmentosDoUsuario = segmentosDoUsuario.toSet()
-                    )
-                }
-                .onFailure { e ->
-                    Log.e("SegmentosVM", "Erro ao carregar segmentos pelo backend", e)
-                    _uiState.value = SegmentosUiState()
-                }
+            carregarSegmentosInterno()
         }
+    }
+
+    private fun iniciarAtualizacaoDeSegmentos() {
+        segmentosJob?.cancel()
+        segmentosJob = viewModelScope.launch {
+            while (isActive) {
+                carregarSegmentosInterno()
+                delay(3000)
+            }
+        }
+    }
+
+    private suspend fun carregarSegmentosInterno() {
+        val usuarioAtualId = Firebase.auth.currentUser?.uid
+        val segmentosResult = catalogRepository.listarSegmentos()
+        val segmentosDoUsuario = usuarioAtualId?.let { id ->
+            usuarioRepository.buscarPorId(id).getOrNull()?.segmentos.orEmpty()
+        }.orEmpty()
+
+        segmentosResult
+            .onSuccess { segmentos ->
+                _uiState.value = SegmentosUiState(
+                    todosOsSegmentos = segmentos,
+                    idsSegmentosDoUsuario = segmentosDoUsuario.toSet()
+                )
+            }
+            .onFailure { e ->
+                Log.e("SegmentosVM", "Erro ao carregar segmentos pelo backend", e)
+                _uiState.value = SegmentosUiState()
+            }
     }
 
     val segmentos: StateFlow<List<Segmento>> = uiState
@@ -70,6 +89,11 @@ class SegmentosViewModel(application: Application) : AndroidViewModel(applicatio
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    override fun onCleared() {
+        super.onCleared()
+        segmentosJob?.cancel()
+    }
 }
 
 data class SegmentosUiState(
