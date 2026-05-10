@@ -7,6 +7,7 @@ import com.example.wchat.model.Grupo
 import com.example.wchat.model.Mensagem
 import com.example.wchat.model.Segmento
 import com.example.wchat.services.InAppNotificationManager
+import com.example.wchat.utils.DisplayNameUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,8 +56,8 @@ class MainViewModel : ViewModel() {
                 }
 
                 val tituloPopup = when (collectionNormalizada) {
-                    "grupos" -> formatarNomeColetivo(prefixo = "Grupo", nome = event.chatNome, id = chatId)
-                    "segmentos" -> formatarNomeColetivo(prefixo = "Segmento", nome = event.chatNome, id = chatId)
+                    "grupos" -> DisplayNameUtils.grupoComPrefixo(event.chatNome ?: chatId)
+                    "segmentos" -> DisplayNameUtils.segmentoComPrefixo(event.chatNome ?: chatId)
                     "chats1a1" -> remetenteNome
                     else -> event.chatNome ?: event.title
                 }
@@ -95,15 +96,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-
-    private fun formatarNomeColetivo(prefixo: String, nome: String?, id: String): String {
-        val base = nome?.takeIf { it.isNotBlank() } ?: id
-        return if (base.startsWith("$prefixo ", ignoreCase = true)) {
-            base
-        } else {
-            "$prefixo $base"
-        }
-    }
 
     private fun iniciarTimerParaDispensar() {
         dismissJob?.cancel()

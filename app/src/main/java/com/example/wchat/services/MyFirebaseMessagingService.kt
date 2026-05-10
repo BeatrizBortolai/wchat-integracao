@@ -15,6 +15,7 @@ import com.example.wchat.data.remote.api.RetrofitProvider
 import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.FcmTokenRequestDto
 import com.example.wchat.session.SessionManager
+import com.example.wchat.utils.DisplayNameUtils
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +34,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             Log.d("FCM", "Payload de dados: $data")
         }
 
-        val title = data["title"] ?: data["remetenteNome"] ?: remoteMessage.notification?.title ?: "Nova mensagem"
+        val titleOriginal = data["title"] ?: data["remetenteNome"] ?: remoteMessage.notification?.title ?: "Nova mensagem"
+        val title = formatarTituloNotificacao(
+            tituloOriginal = titleOriginal,
+            chatNome = data["chatNome"],
+            chatId = data["chatId"],
+            collection = data["collection"]
+        )
         val body = data["body"] ?: remoteMessage.notification?.body ?: "Você recebeu uma nova mensagem."
 
         if (AppLifecycleTracker.isForeground()) {
@@ -69,6 +76,19 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d("FCM", "Novo token gerado: $token")
         sendTokenToBackend(token)
+    }
+
+    private fun formatarTituloNotificacao(
+        tituloOriginal: String,
+        chatNome: String?,
+        chatId: String?,
+        collection: String?
+    ): String {
+        return when (collection?.lowercase()) {
+            "grupos" -> DisplayNameUtils.grupoComPrefixo(chatNome ?: chatId ?: tituloOriginal)
+            "segmentos" -> DisplayNameUtils.segmentoComPrefixo(chatNome ?: chatId ?: tituloOriginal)
+            else -> tituloOriginal
+        }
     }
 
     private fun sendTokenToBackend(token: String) {
