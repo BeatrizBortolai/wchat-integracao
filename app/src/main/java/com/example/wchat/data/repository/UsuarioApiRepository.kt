@@ -43,14 +43,12 @@ class UsuarioApiRepository(context: Context) {
     suspend fun atualizarUsuario(
         id: String,
         nome: String? = null,
-        cargo: String? = null,
         anotacoesOperador: String? = null
     ): Result<UsuarioResponseDto> = try {
         val response = api.atualizarUsuario(
             id = id,
             request = UsuarioUpdateRequestDto(
                 nome = nome,
-                cargo = cargo,
                 anotacoesOperador = anotacoesOperador
             )
         )

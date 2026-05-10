@@ -32,25 +32,41 @@ class ConversasViewModel(application: Application) : AndroidViewModel(applicatio
     val contagensNaoLidas: StateFlow<Map<String, Int>> = _contagensNaoLidas.asStateFlow()
 
     private var contagensJob: Job? = null
+    private var usuariosJob: Job? = null
 
     init {
-        carregarUsuarios()
+        iniciarAtualizacaoDeUsuarios()
         iniciarAtualizacaoDeContagensNaoLidas()
     }
 
     fun carregarUsuarios() {
         viewModelScope.launch {
-            val usuarioAtualId = Firebase.auth.currentUser?.uid
-            usuarioApiRepository.listarUsuarios()
-                .onSuccess { usuarios ->
-                    _estadoDosUsuarios.value = Result.success(
-                        usuarios.filter { it.id != usuarioAtualId }
-                    )
-                }
-                .onFailure { e ->
-                    Log.e("ConversasVM", "Erro ao carregar usuários pelo backend", e)
-                    _estadoDosUsuarios.value = Result.failure(e)
-                }
+            carregarUsuariosInterno()
+        }
+    }
+
+    private suspend fun carregarUsuariosInterno() {
+        val usuarioAtualId = Firebase.auth.currentUser?.uid
+        usuarioApiRepository.listarUsuarios()
+            .onSuccess { usuarios ->
+                _estadoDosUsuarios.value = Result.success(
+                    usuarios.filter { it.id != usuarioAtualId }
+                )
+            }
+            .onFailure { e ->
+                Log.e("ConversasVM", "Erro ao carregar usuários pelo backend", e)
+                _estadoDosUsuarios.value = Result.failure(e)
+            }
+    }
+
+    private fun iniciarAtualizacaoDeUsuarios() {
+        usuariosJob?.cancel()
+
+        usuariosJob = viewModelScope.launch {
+            while (isActive) {
+                carregarUsuariosInterno()
+                delay(3000)
+            }
         }
     }
 
@@ -115,5 +131,6 @@ class ConversasViewModel(application: Application) : AndroidViewModel(applicatio
     override fun onCleared() {
         super.onCleared()
         contagensJob?.cancel()
+        usuariosJob?.cancel()
     }
 }
