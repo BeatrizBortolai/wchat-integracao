@@ -1,11 +1,11 @@
 package com.example.wchat.components
 
-import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -15,14 +15,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -48,7 +46,6 @@ import com.google.firebase.auth.auth
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
-@OptIn(UnstableApi::class)
 @Composable
 fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario) {
     val conversasViewModel: ConversasViewModel = viewModel()
@@ -63,55 +60,67 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
 
     val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val rotaAtual = navBackStackEntry?.destination?.route
-    val rotasSemTopBarPrincipal = listOf(
-        "notificacao",
-        "selecionarDestinatarios/{titulo}/{nomeCampanha}"
-    )
-    val mostrarTopBarPrincipal = rotasSemTopBarPrincipal.none { rota ->
-        rotaAtual?.startsWith(rota.substringBefore('/')) ?: false
+
+    val tituloDaBarra = when {
+        rotaAtual?.startsWith("selecionarDestinatarios") == true -> "Selecionar Destinatários"
+        else -> "WChat"
     }
+
+    val navigationIcon: @Composable (() -> Unit)? = if (rotaAtual?.startsWith("selecionarDestinatarios") == true) {
+        {
+            IconButton(onClick = { bottomNavController.popBackStack() }) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+            }
+        }
+    } else null
+
+    val exibirSearchIcon = rotaAtual != "notificacao" && rotaAtual?.startsWith("selecionarDestinatarios") == false
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
-                if (mostrarTopBarPrincipal) {
-                    Column {
-                        WChatTopBar(
-                            tipoUsuario = tipoUsuario,
-                            actions = {
+                Column {
+                    WChatTopBar(
+                        tipoUsuario = tipoUsuario,
+                        titulo = tituloDaBarra,
+                        navigationIcon = navigationIcon,
+                        actions = {
+                            if (exibirSearchIcon) {
                                 IconButton(onClick = { mostrandoBusca = !mostrandoBusca }) {
                                     Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar")
                                 }
-                                Box {
-                                    IconButton(onClick = { menuAberto = true }) {
-                                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Mais opções")
-                                    }
-                                    DropdownMenu(
-                                        expanded = menuAberto,
-                                        onDismissRequest = { menuAberto = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("Atualizar Perfil") },
-                                            onClick = {
-                                                menuAberto = false
-                                                mainNavController.navigate("editarPerfil")
+                            }
+                            Box {
+                                IconButton(onClick = { menuAberto = true }) {
+                                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Mais opções")
+                                }
+                                DropdownMenu(
+                                    expanded = menuAberto,
+                                    onDismissRequest = { menuAberto = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Atualizar Perfil") },
+                                        onClick = {
+                                            menuAberto = false
+                                            mainNavController.navigate("editarPerfil")
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Sair") },
+                                        onClick = {
+                                            menuAberto = false
+                                            Firebase.auth.signOut()
+                                            SessionManager(context).clearSession()
+                                            mainNavController.navigate("telaInicial") {
+                                                popUpTo(0) { inclusive = true }
                                             }
-                                        )
-                                        DropdownMenuItem(
-                                            text = { Text("Sair") },
-                                            onClick = {
-                                                menuAberto = false
-                                                Firebase.auth.signOut()
-                                                SessionManager(context).clearSession()
-                                                mainNavController.navigate("telaInicial") {
-                                                    popUpTo(0) { inclusive = true }
-                                                }
-                                            }
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
-                        )
+                        }
+                    )
+                    if (exibirSearchIcon) {
                         SearchBar(
                             mostrandoBusca = mostrandoBusca,
                             textoBusca = textoBusca,
@@ -139,7 +148,6 @@ fun MainScaffold(mainNavController: NavHostController, tipoUsuario: TipoUsuario)
     }
 }
 
-@OptIn(UnstableApi::class)
 @Composable
 private fun BottomNavGraph(
     mainNavController: NavHostController,

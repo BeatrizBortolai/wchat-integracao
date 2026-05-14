@@ -3,17 +3,15 @@ package com.example.wchat.data.repository
 import android.content.Context
 import com.example.wchat.data.remote.api.RetrofitProvider
 import com.example.wchat.data.remote.api.WChatApi
+import com.example.wchat.data.remote.dto.ConversaResponseDto
 import com.example.wchat.data.remote.dto.EnvioSegmentoRequestDto
 import com.example.wchat.data.remote.dto.MensagemRequestDto
-import com.example.wchat.data.remote.dto.MensagemResponseDto
+import com.example.wchat.data.remote.mapper.toModel
 import com.example.wchat.model.Mensagem
 import com.example.wchat.model.TipoChat
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import retrofit2.Response
 
 /** Repository REST para mensagens. O Firebase fica apenas para autenticação/FCM. */
 class BackendChatRepository(context: Context) {
@@ -89,28 +87,12 @@ class BackendChatRepository(context: Context) {
         else Result.failure(Exception("Erro ao excluir mensagem: ${response.code()}"))
     }
 
+    suspend fun buscarConversas(usuarioId: String): Response<List<ConversaResponseDto>> {
+        return api.buscarConversas(usuarioId)
+    }
+
     private fun obterOutroUsuarioId(chatId: String, usuarioAtualId: String): String? {
         if (!chatId.contains("_") && chatId != usuarioAtualId) return chatId
         return chatId.split("_").firstOrNull { it.isNotBlank() && it != usuarioAtualId }
     }
 }
-
-fun MensagemResponseDto.toModel(): Mensagem = Mensagem(
-    id = id,
-    texto = texto,
-    remetenteId = remetenteId,
-    remetenteNome = remetenteNome,
-    destinatarioId = destinatarioId,
-    timestamp = dataEnvio?.toDateOrNull(),
-    lida = lida
-)
-
-private fun String.toDateOrNull(): Date? = try {
-    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-    parser.timeZone = TimeZone.getDefault()
-    parser.parse(this.substringBefore('.'))
-} catch (_: Exception) {
-    null
-}
-
-

@@ -7,7 +7,7 @@ import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.AuthSyncRequestDto
 import com.example.wchat.data.remote.dto.FcmTokenRequestDto
 import com.example.wchat.data.remote.mapper.toDomain
-import com.example.wchat.domain.model.AuthSession
+import com.example.wchat.model.AuthSession
 import com.example.wchat.session.SessionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging

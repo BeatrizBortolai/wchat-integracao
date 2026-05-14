@@ -11,7 +11,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,21 +37,18 @@ fun GruposScreen(
     conversasViewModel: ConversasViewModel = viewModel()
 ) {
     val uiState by gruposViewModel.uiState.collectAsState()
-
     val contagensNaoLidas by conversasViewModel.contagensNaoLidas.collectAsState()
 
-    Scaffold { innerPadding ->
-        ListaDeGruposComSecoes(
-            modifier = Modifier.padding(innerPadding),
-            uiState = uiState,
-            todosOsTiposDeGrupo = TipoGrupo.todos(),
-            contagensNaoLidas = contagensNaoLidas,
-            textoBusca = textoBusca,
-            onGrupoClick = { idDoGrupo ->
-                navController.navigate("chatGrupo/$idDoGrupo/${tipoUsuarioLogado.name}")
-            }
-        )
-    }
+    ListaDeGruposComSecoes(
+        modifier = Modifier.fillMaxSize(),
+        uiState = uiState,
+        todosOsTiposDeGrupo = TipoGrupo.todos(),
+        contagensNaoLidas = contagensNaoLidas,
+        textoBusca = textoBusca,
+        onGrupoClick = { idDoGrupo ->
+            navController.navigate("chatGrupo/$idDoGrupo/${tipoUsuarioLogado.name}")
+        }
+    )
 }
 
 @Composable

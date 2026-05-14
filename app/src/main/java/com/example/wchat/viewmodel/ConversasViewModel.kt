@@ -4,9 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wchat.data.remote.api.RetrofitProvider
-import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.ConversaResponseDto
+import com.example.wchat.data.repository.BackendChatRepository
 import com.example.wchat.data.repository.UsuarioApiRepository
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase
@@ -21,9 +20,7 @@ import kotlinx.coroutines.launch
 
 class ConversasViewModel(application: Application) : AndroidViewModel(application) {
     private val usuarioApiRepository = UsuarioApiRepository(application.applicationContext)
-    private val api: WChatApi = RetrofitProvider
-        .create(application.applicationContext)
-        .create(WChatApi::class.java)
+    private val chatRepository = BackendChatRepository(application.applicationContext)
 
     private val _estadoDosUsuarios = MutableStateFlow<Result<List<Usuario>>?>(null)
     val estadoDosUsuarios: StateFlow<Result<List<Usuario>>?> = _estadoDosUsuarios.asStateFlow()
@@ -90,7 +87,7 @@ class ConversasViewModel(application: Application) : AndroidViewModel(applicatio
         val usuarioAtualId = Firebase.auth.currentUser?.uid ?: return
 
         try {
-            val response = api.buscarConversas(usuarioAtualId)
+            val response = chatRepository.buscarConversas(usuarioAtualId)
             if (!response.isSuccessful) {
                 Log.w("ConversasVM", "Falha ao buscar contagens/conversas: ${response.code()}")
                 return

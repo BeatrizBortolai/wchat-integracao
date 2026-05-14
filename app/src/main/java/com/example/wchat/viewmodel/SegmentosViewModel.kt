@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.util.UnstableApi
 import com.example.wchat.data.repository.BackendCatalogRepository
 import com.example.wchat.data.repository.UsuarioApiRepository
 import com.example.wchat.model.Segmento
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-@UnstableApi
 class SegmentosViewModel(application: Application) : AndroidViewModel(application) {
     private val catalogRepository = BackendCatalogRepository(application.applicationContext)
     private val usuarioRepository = UsuarioApiRepository(application.applicationContext)

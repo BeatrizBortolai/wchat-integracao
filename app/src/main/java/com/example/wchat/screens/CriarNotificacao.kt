@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.wchat.R
-import com.example.wchat.components.WChatTopBar
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.viewmodel.NotificacaoEvento
 import com.example.wchat.viewmodel.NotificacaoViewModel
@@ -55,18 +54,14 @@ fun CriarNotificacaoScreen(navController: NavController) {
         }
     }
 
-    Scaffold(
-        topBar = { WChatTopBar(tipoUsuario = TipoUsuario.OPERADOR) }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
             Text(
                 text = "Criar Nova Notificação",
                 style = MaterialTheme.typography.headlineMedium,
@@ -126,5 +121,4 @@ fun CriarNotificacaoScreen(navController: NavController) {
                 Text(text = "SELECIONAR DESTINATÁRIOS", color = Color.White)
             }
         }
-    }
 }

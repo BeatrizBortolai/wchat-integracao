@@ -33,6 +33,7 @@ sealed class CadastroEvento {
 class CadastroViewModel : ViewModel() {
 
     private val firebaseAuthRepository = FirebaseAuthRepository()
+    private var authIntegrationRepository: AuthIntegrationRepository? = null
 
     var uiState by mutableStateOf(CadastroUiState())
         private set
@@ -85,8 +86,11 @@ class CadastroViewModel : ViewModel() {
                 email = uiState.email,
                 password = uiState.senha
             ).onSuccess {
-                val authIntegrationRepository = AuthIntegrationRepository(context.applicationContext)
-                val syncResult = authIntegrationRepository.syncAuthenticatedFirebaseUser(
+                val repo = authIntegrationRepository ?: AuthIntegrationRepository(context.applicationContext).also {
+                    authIntegrationRepository = it
+                }
+                
+                val syncResult = repo.syncAuthenticatedFirebaseUser(
                     nome = uiState.nome,
                     email = uiState.email,
                     password = uiState.senha,
@@ -97,7 +101,7 @@ class CadastroViewModel : ViewModel() {
 
                 syncResult
                     .onSuccess {
-                        authIntegrationRepository.sendFcmTokenToBackend()
+                        repo.sendFcmTokenToBackend()
                         uiState = uiState.copy(isLoading = false)
                         _evento.emit(CadastroEvento.Sucesso("Cadastro realizado!"))
                     }

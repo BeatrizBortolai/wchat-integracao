@@ -9,7 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.wchat.data.repository.AuthIntegrationRepository
 import com.example.wchat.data.repository.FirebaseAuthRepository
 import com.example.wchat.data.repository.UsuarioApiRepository
-import com.example.wchat.data.repository.toModel
+import com.example.wchat.data.remote.mapper.toModel
 import com.example.wchat.model.TipoUsuario
 import com.example.wchat.model.Usuario
 import kotlinx.coroutines.flow.MutableSharedFlow

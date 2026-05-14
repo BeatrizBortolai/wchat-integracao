@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Segment
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
@@ -55,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.wchat.R
-import com.example.wchat.components.WChatTopBar
 import com.example.wchat.model.Grupo
 import com.example.wchat.model.Notificacao
 import com.example.wchat.model.Segmento
@@ -120,22 +118,8 @@ fun SelecionarDestinatariosScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            WChatTopBar(
-                tipoUsuario = TipoUsuario.OPERADOR,
-                titulo = "Selecionar Destinatários",
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)) {
+    Column(modifier = Modifier
+        .fillMaxSize()) {
 
             OutlinedTextField(
                 value = uiState.textoBusca,
@@ -214,7 +198,6 @@ fun SelecionarDestinatariosScreen(
                 }
             }
         }
-    }
 }
 
 @Composable

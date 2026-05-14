@@ -1,4 +1,4 @@
-package com.example.wchat.domain.model
+package com.example.wchat.model
 
 data class AuthSession(
     val token: String,

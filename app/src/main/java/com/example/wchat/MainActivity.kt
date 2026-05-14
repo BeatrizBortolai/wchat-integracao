@@ -36,7 +36,6 @@ import com.example.wchat.screens.*
 import com.example.wchat.ui.theme.WChatTheme
 import com.example.wchat.viewmodel.MainViewModel
 import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.auth
 
 class MainActivity : ComponentActivity() {
@@ -46,7 +45,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        FirebaseApp.initializeApp(this)
         solicitarPermissaoDeNotificacao()
 
         setContent {

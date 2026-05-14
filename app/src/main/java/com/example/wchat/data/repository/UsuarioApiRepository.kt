@@ -5,7 +5,7 @@ import com.example.wchat.data.remote.api.RetrofitProvider
 import com.example.wchat.data.remote.api.WChatApi
 import com.example.wchat.data.remote.dto.UsuarioResponseDto
 import com.example.wchat.data.remote.dto.UsuarioUpdateRequestDto
-import com.example.wchat.model.TipoUsuario
+import com.example.wchat.data.remote.mapper.toModel
 import com.example.wchat.model.Usuario
 
 class UsuarioApiRepository(context: Context) {
@@ -87,19 +87,4 @@ class UsuarioApiRepository(context: Context) {
     } catch (e: Exception) {
         Result.failure(e)
     }
-}
-
-fun UsuarioResponseDto.toModel(): Usuario {
-    val tipoUsuario = runCatching { TipoUsuario.valueOf(tipo.uppercase()) }
-        .getOrDefault(TipoUsuario.CLIENTE)
-
-    return Usuario(
-        id = id,
-        nome = nome,
-        email = email,
-        tipo = tipoUsuario,
-        cargo = cargo,
-        segmentos = segmentos.orEmpty(),
-        anotacoesOperador = anotacoesOperador
-    )
 }

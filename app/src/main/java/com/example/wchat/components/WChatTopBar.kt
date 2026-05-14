@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.example.wchat.R
 import com.example.wchat.model.TipoUsuario
@@ -33,14 +34,19 @@ fun WChatTopBar(
         colorResource(id = R.color.azul_cinza)
     }
 
+    // Reduz um pouco a fonte se o título for longo para evitar quebra
+    val tamanhoFonte = if (titulo.length > 15) 20.sp else 24.sp
+
     TopAppBar(
         title = {
             Text(
                 text = titulo,
-                fontSize = 24.sp,
+                fontSize = tamanhoFonte,
                 fontWeight = FontWeight.Bold,
                 fontFamily = Barlow,
-                color = Color.White
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         navigationIcon = {

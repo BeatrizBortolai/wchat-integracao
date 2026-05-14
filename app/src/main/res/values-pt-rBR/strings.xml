@@ -1,12 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">WChat</string>
 
-    <string name="login">Login</string>
-    <string name="signin">Cadastrar-se</string>
-    <string name="subtitle">Por favor, informe os seus dados</string>
-    <string name="email">Digite o seu e-mail</string>
-    <string name="password">Digite a sua senha</string>
+    <string name="login">Entrar</string>
+    <string name="signin">Entrar</string>
+    <string name="subtitle">Por favor, forneça suas informações</string>
+    <string name="email">Digite seu e-mail</string>
+    <string name="password">Digite sua senha</string>
     <string name="enter">Entrar</string>
     <string name="back">Voltar</string>
+
+    <string name="login_success">Login bem-sucedido!</string>
+    <string name="login_error">Erro ao realizar login.</string>
+    <string name="cadastro_success">Cadastro realizado com sucesso!</string>
+    <string name="error_empty_name">O campo Nome não pode estar em branco.</string>
+    <string name="error_invalid_email">O campo E-mail é inválido.</string>
+    <string name="error_password_mismatch">As senhas não coincidem ou estão em branco.</string>
+    <string name="error_association_required">Como cliente, é obrigatório selecionar um Grupo ou Segmento.</string>
+
 </resources>

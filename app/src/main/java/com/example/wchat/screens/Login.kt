@@ -64,11 +64,13 @@ fun Login(navController: NavController, tipoUsuario: TipoUsuario) {
     val corPrincipal = if (tipoUsuario == TipoUsuario.CLIENTE) colorResource(id = R.color.azul_cinza) else colorResource(id = R.color.laranja_escuro)
     val corBotaoInativo = if (tipoUsuario == TipoUsuario.CLIENTE) colorResource(id = R.color.laranja_escuro) else colorResource(id = R.color.azul_cinza)
 
+    val msgSucesso = stringResource(id = R.string.login_success)
+
     LaunchedEffect(key1 = true) {
         viewModel.evento.collect { evento ->
             when (evento) {
                 is LoginEvento.Sucesso -> {
-                    Toast.makeText(context, "Login bem-sucedido!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, msgSucesso, Toast.LENGTH_SHORT).show()
                     navController.navigate("main/${evento.usuario.tipo.name}") {
                         popUpTo("telaInicial") { inclusive = true }
                     }

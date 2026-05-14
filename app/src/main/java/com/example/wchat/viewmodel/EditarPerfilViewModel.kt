@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wchat.data.repository.FirebaseAuthRepository
 import com.example.wchat.data.repository.UsuarioApiRepository
-import com.example.wchat.data.repository.toModel
+import com.example.wchat.data.remote.mapper.toModel
 import com.example.wchat.model.Usuario
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
