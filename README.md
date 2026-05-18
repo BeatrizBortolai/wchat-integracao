@@ -189,6 +189,8 @@ Execute:
 docker-compose up
 ```
 
+Em seguida rode a aplicação.
+
 ---
 
 # 🚀 Como executar o frontend
