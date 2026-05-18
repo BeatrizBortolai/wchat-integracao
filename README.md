@@ -1,14 +1,31 @@
 # WChat - Frontend Android
 
-Aplicação mobile desenvolvida em Kotlin utilizando Jetpack Compose para gerenciamento de mensagens, conversas, grupos e notificações em tempo real.
+Aplicação mobile desenvolvida em Kotlin utilizando Jetpack Compose para gerenciamento de mensagens, grupos, notificações e comunicação em tempo real.
 
-O projeto utiliza Firebase para autenticação, notificações push e analytics, além de integração com uma API própria via Retrofit.
+O frontend foi desenvolvido para funcionar integrado ao backend WChat (Spring Boot + MongoDB), utilizando Firebase Authentication, Firebase Cloud Messaging e Retrofit para comunicação com a API.
 
 ---
 
-## 📱 Tecnologias utilizadas
+# 📱 Demonstração do projeto
 
-### Android
+O aplicativo possui:
+
+* Login e cadastro de usuários
+* Persistência de sessão
+* Conversas em tempo real
+* Gerenciamento de grupos
+* Segmentação de usuários
+* Sistema de notificações
+* Edição de perfil
+* Seleção de destinatários
+* Integração com Firebase
+* Comunicação com backend REST API
+
+---
+
+# 🛠️ Tecnologias utilizadas
+
+## Android
 
 * Kotlin
 * Jetpack Compose
@@ -16,116 +33,194 @@ O projeto utiliza Firebase para autenticação, notificações push e analytics,
 * Navigation Compose
 * ViewModel
 * Coroutines
+* Retrofit
+* OkHttp
 
-### Backend & Serviços
+## Firebase
 
 * Firebase Authentication
 * Firebase Firestore
 * Firebase Cloud Messaging (FCM)
 * Firebase Analytics
-* Retrofit
-* OkHttp
+
+## Backend integrado
+
+O frontend se comunica com um backend desenvolvido utilizando:
+
+* Java
+* Spring Boot
+* MongoDB
+* JWT Authentication
+* Firebase Admin SDK
+* Docker Compose
 
 ---
 
-## 🏗️ Arquitetura do projeto
+# 🏗️ Arquitetura do projeto
 
 O projeto segue uma estrutura organizada em camadas para facilitar manutenção, escalabilidade e reutilização de código.
 
 ```text
 app/src/main/java/com/example/wchat
 │
-├── components/     # Componentes reutilizáveis da interface
+├── components/     # Componentes reutilizáveis
 ├── data/           # APIs, DTOs e integração remota
 ├── model/          # Modelos de dados
 ├── screens/        # Telas da aplicação
 ├── services/       # Serviços e integrações
-├── session/        # Gerenciamento de sessão do usuário
+├── session/        # Gerenciamento de sessão
 ├── ui/             # Tema, cores e estilos
 ├── utils/          # Utilitários auxiliares
-└── viewmodel/      # Lógica de estado das telas
+└── viewmodel/      # Controle de estado das telas
 ```
 
 ---
 
-## ✨ Funcionalidades
+# ✨ Funcionalidades
 
-### 🔐 Autenticação
+## 🔐 Autenticação
 
 * Login de usuários
 * Cadastro de usuários
 * Persistência de sessão
-* Sincronização com Firebase
+* Integração com Firebase Authentication
+* Controle de autenticação via JWT
 
-### 💬 Conversas
+## 💬 Conversas
 
 * Listagem de conversas
-* Tela de chat em tempo real
+* Chat em tempo real
 * Envio de mensagens
-* Interface moderna utilizando Compose
+* Atualização dinâmica da interface
 
-### 👥 Grupos e Segmentos
+## 👥 Grupos e Segmentos
 
-* Gerenciamento de grupos
+* Criação e gerenciamento de grupos
 * Segmentação de usuários
 * Seleção de destinatários
 
-### 🔔 Notificações
+## 🔔 Notificações
 
 * Push notifications com Firebase Cloud Messaging
-* Notificações internas no app
-* Cards personalizados de notificação
+* Criação de notificações
+* Cards personalizados
 
-### 👤 Perfil
+## 👤 Perfil
 
-* Visualização e edição de perfil
+* Visualização de perfil
 * Atualização de informações do usuário
+* Persistência de dados
 
 ---
 
-## 📂 Principais telas
+# 📂 Principais telas
 
-| Tela                    | Descrição                      |
-| ----------------------- | ------------------------------ |
-| Login                   | Autenticação do usuário        |
-| Cadastro                | Registro de novos usuários     |
-| Conversas               | Lista de chats disponíveis     |
-| ChatScreen              | Conversa em tempo real         |
-| Grupos                  | Gerenciamento de grupos        |
-| Segmentos               | Organização por segmentos      |
-| Perfil                  | Informações do usuário         |
-| EditarPerfil            | Atualização de perfil          |
-| CriarNotificacao        | Criação de notificações        |
-| SelecionarDestinatarios | Seleção de usuários para envio |
+| Tela                    | Descrição                  |
+| ----------------------- | -------------------------- |
+| Login                   | Autenticação do usuário    |
+| Cadastro                | Registro de novos usuários |
+| Conversas               | Lista de chats disponíveis |
+| ChatScreen              | Conversa em tempo real     |
+| Grupos                  | Gerenciamento de grupos    |
+| Segmentos               | Organização de usuários    |
+| Perfil                  | Informações do usuário     |
+| EditarPerfil            | Atualização de perfil      |
+| CriarNotificacao        | Criação de notificações    |
+| SelecionarDestinatarios | Seleção de usuários        |
 
 ---
 
-## ⚙️ Configuração do ambiente
+# 📦 Estrutura da entrega
 
-### Pré-requisitos
+O projeto contém:
+
+* Código fonte completo do frontend Android
+* Integração com Firebase
+* Firebase Functions
+* APK de release para instalação
+
+APK disponível em:
+
+```text
+app/release/app-release.apk
+```
+
+Arquivos desnecessários como `.idea/`, `.kotlin/` e `node_modules/` não fazem parte da entrega por serem gerados automaticamente pelo ambiente.
+
+---
+
+# ⚙️ Pré-requisitos
+
+Para executar o projeto é necessário possuir:
 
 * Android Studio Hedgehog ou superior
 * JDK 11
 * Gradle
+* Node.js
+* Backend WChat em execução
 * Conta Firebase configurada
 
 ---
 
-## 🚀 Como executar o projeto
+# 🔗 Integração com o Backend
 
-### 1. Clone o repositório
+O frontend foi desenvolvido para consumir a API do backend WChat.
+
+A comunicação é realizada utilizando Retrofit.
+
+Base URL utilizada no Android Emulator:
+
+```text
+http://10.0.2.2:8080/
+```
+
+Caso utilize Genymotion:
+
+```text
+http://192.168.56.1:8080/
+```
+
+Certifique-se de que o backend esteja em execução antes de iniciar o aplicativo Android.
+
+## Executando o backend
+
+Linux/Mac:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Windows:
+
+```bash
+mvnw.cmd spring-boot:run
+```
+
+Caso utilize Docker:
+
+```bash
+docker-compose up
+```
+
+---
+
+# 🚀 Como executar o frontend
+
+## 1. Clone o repositório
 
 ```bash
 git clone https://github.com/seu-usuario/seu-repositorio.git
 ```
 
-### 2. Abra no Android Studio
+---
+
+## 2. Abra no Android Studio
 
 Abra a pasta do projeto no Android Studio.
 
 ---
 
-### 3. Configure o Firebase
+## 3. Configure o Firebase
 
 O projeto utiliza Firebase Authentication, Firestore e FCM.
 
@@ -139,15 +234,28 @@ esteja corretamente configurado.
 
 ---
 
-### 4. Execute o projeto
+## 4. Instale as dependências do Firebase Functions
 
-Clique em:
+O projeto utiliza Firebase Functions.
+
+Antes de executar, instale as dependências:
+
+```bash
+cd functions
+npm install
+```
+
+---
+
+## 5. Execute o projeto
+
+Pelo Android Studio:
 
 ```text
 Run > Run 'app'
 ```
 
-ou utilize:
+Ou utilizando Gradle:
 
 ```bash
 ./gradlew installDebug
@@ -155,17 +263,15 @@ ou utilize:
 
 ---
 
-## 🔌 Configuração da API
+# 🔌 Configuração da API
 
 A comunicação com a API é realizada utilizando Retrofit.
 
-Arquivo principal:
+Arquivos principais:
 
 ```text
 data/remote/api/RetrofitProvider.kt
 ```
-
-Interface de endpoints:
 
 ```text
 data/remote/api/WChatApi.kt
@@ -173,7 +279,7 @@ data/remote/api/WChatApi.kt
 
 ---
 
-## 📦 Dependências principais
+# 📦 Dependências principais
 
 ```kotlin
 implementation("com.google.firebase:firebase-auth")
@@ -186,7 +292,7 @@ implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
 ---
 
-## 🎨 Interface
+# 🎨 Interface
 
 A interface foi construída com Jetpack Compose seguindo uma abordagem moderna e declarativa.
 
@@ -197,27 +303,23 @@ O projeto possui:
 * Navegação desacoplada
 * Tema customizado
 * Material Design 3
+* Responsividade para diferentes telas
 
 ---
 
-## 📌 Melhorias futuras
+# 📌 Melhorias futuras
 
 * Upload de imagens
 * Status online/offline
 * Indicador de digitação
 * Mensagens de áudio
-* Tema dark mode completo
+* Dark mode completo
 * Testes automatizados
 * Paginação de mensagens
 
 ---
 
-## 👨‍💻 Desenvolvido por
+# 📄 Licença
 
-Beatriz Bortolai
+Projeto desenvolvido para fins acadêmicos e de estudo.
 
----
-
-## 📄 Licença
-
-Este projeto é destinado para fins acadêmicos e de estudo.
