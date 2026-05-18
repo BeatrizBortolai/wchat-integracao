@@ -10,16 +10,16 @@ O frontend foi desenvolvido para funcionar integrado ao backend WChat (Spring Bo
 
 O aplicativo possui:
 
-* Login e cadastro de usuários
-* Persistência de sessão
-* Conversas em tempo real
-* Gerenciamento de grupos
-* Segmentação de usuários
-* Sistema de notificações
-* Edição de perfil
-* Seleção de destinatários
-* Integração com Firebase
-* Comunicação com backend REST API
+- Login e cadastro de usuários
+- Persistência de sessão
+- Conversas em tempo real
+- Gerenciamento de grupos
+- Segmentação de usuários
+- Sistema de notificações
+- Edição de perfil
+- Seleção de destinatários
+- Integração com Firebase
+- Comunicação com backend REST API
 
 ---
 
@@ -27,32 +27,32 @@ O aplicativo possui:
 
 ## Android
 
-* Kotlin
-* Jetpack Compose
-* Material 3
-* Navigation Compose
-* ViewModel
-* Coroutines
-* Retrofit
-* OkHttp
+- Kotlin
+- Jetpack Compose
+- Material 3
+- Navigation Compose
+- ViewModel
+- Coroutines
+- Retrofit
+- OkHttp
 
 ## Firebase
 
-* Firebase Authentication
-* Firebase Firestore
-* Firebase Cloud Messaging (FCM)
-* Firebase Analytics
+- Firebase Authentication
+- Firebase Firestore
+- Firebase Cloud Messaging (FCM)
+- Firebase Analytics
 
 ## Backend integrado
 
 O frontend se comunica com um backend desenvolvido utilizando:
 
-* Java
-* Spring Boot
-* MongoDB
-* JWT Authentication
-* Firebase Admin SDK
-* Docker Compose
+- Java
+- Spring Boot
+- MongoDB
+- JWT Authentication
+- Firebase Admin SDK
+- Docker Compose
 
 ---
 
@@ -80,52 +80,52 @@ app/src/main/java/com/example/wchat
 
 ## 🔐 Autenticação
 
-* Login de usuários
-* Cadastro de usuários
-* Persistência de sessão
-* Integração com Firebase Authentication
-* Controle de autenticação via JWT
+- Login de usuários
+- Cadastro de usuários
+- Persistência de sessão
+- Integração com Firebase Authentication
+- Controle de autenticação via JWT
 
 ## 💬 Conversas
 
-* Listagem de conversas
-* Chat em tempo real
-* Envio de mensagens
-* Atualização dinâmica da interface
+- Listagem de conversas
+- Chat em tempo real
+- Envio de mensagens
+- Atualização dinâmica da interface
 
 ## 👥 Grupos e Segmentos
 
-* Criação e gerenciamento de grupos
-* Segmentação de usuários
+- Criação e gerenciamento de grupos
+- Segmentação de usuários
 
 ## 🔔 Notificações
 
-* Push notifications com Firebase Cloud Messaging
-* Criação de notificações
-* Cards personalizados
-* Seleção de destinatários
+- Push notifications com Firebase Cloud Messaging
+- Criação de notificações
+- Cards personalizados
+- Seleção de destinatários
 
 ## 👤 Perfil
 
-* Visualização de perfil
-* Atualização de informações do usuário
-* Persistência de dados
+- Visualização de perfil
+- Atualização de informações do usuário
+- Persistência de dados
 
 ---
 
 # 📂 Principais telas
 
-| Tela                    | Descrição                                  |
-| ----------------------- | ------------------------------------------ |
-| Login                   | Autenticação do usuário                    |
-| Cadastro                | Registro de novos usuários                 |
-| Conversas               | Lista de chats disponíveis                 |
-| ChatScreen              | Conversa em tempo real                     |
-| Grupos                  | Gerenciamento de grupos                    |
-| Segmentos               | Organização de usuários                    |
-| Perfil                  | Informações do usuário                     |
-| EditarPerfil            | Atualização de perfil                      |
-| CriarNotificacao        | Criação de notificações                    |
+| Tela | Descrição |
+|---|---|
+| Login | Autenticação do usuário |
+| Cadastro | Registro de novos usuários |
+| Conversas | Lista de chats disponíveis |
+| ChatScreen | Conversa em tempo real |
+| Grupos | Gerenciamento de grupos |
+| Segmentos | Organização de usuários |
+| Perfil | Informações do usuário |
+| EditarPerfil | Atualização de perfil |
+| CriarNotificacao | Criação de notificações |
 | SelecionarDestinatarios | Seleção de usuários, grupos e/ou segmentos |
 
 ---
@@ -134,18 +134,18 @@ app/src/main/java/com/example/wchat
 
 O projeto contém:
 
-* Código fonte completo do frontend Android
-* Integração com Firebase
-* Firebase Functions
-* APK de release para instalação
+- Código fonte completo do frontend Android
+- Integração com Firebase
+- Firebase Functions
+- APK Android para instalação
 
 APK disponível em:
 
 ```text
-app/release/app-release.apk
+apk/WChat.apk
 ```
 
-Arquivos desnecessários como `.idea/`, `.kotlin/` e `node_modules/` não fazem parte da entrega por serem gerados automaticamente pelo ambiente.
+Arquivos desnecessários como `.idea/`, `.kotlin/`, `build/` e `node_modules/` não fazem parte da entrega por serem gerados automaticamente pelo ambiente.
 
 ---
 
@@ -153,12 +153,9 @@ Arquivos desnecessários como `.idea/`, `.kotlin/` e `node_modules/` não fazem 
 
 Para executar o projeto é necessário possuir:
 
-* Android Studio Hedgehog ou superior
-* JDK 11
-* Gradle
-* Node.js
-* Backend WChat em execução
-* Conta Firebase configurada
+- Android Studio
+- Docker Desktop
+- Backend WChat em execução
 
 ---
 
@@ -184,19 +181,9 @@ Certifique-se de que o backend esteja em execução antes de iniciar o aplicativ
 
 ## Executando o backend
 
-Linux/Mac:
+O backend do projeto foi configurado para execução utilizando Docker Compose.
 
-```bash
-./mvnw spring-boot:run
-```
-
-Windows:
-
-```bash
-mvnw.cmd spring-boot:run
-```
-
-Caso utilize Docker:
+Execute:
 
 ```bash
 docker-compose up
@@ -220,17 +207,13 @@ Abra a pasta do projeto no Android Studio.
 
 ---
 
-## 3. Configure o Firebase
+## 3. Firebase
 
-O projeto utiliza Firebase Authentication, Firestore e FCM.
-
-Certifique-se de que o arquivo:
+O projeto já possui integração Firebase configurada através do arquivo:
 
 ```text
 app/google-services.json
 ```
-
-esteja corretamente configurado.
 
 ---
 
@@ -253,12 +236,6 @@ Pelo Android Studio:
 
 ```text
 Run > Run 'app'
-```
-
-Ou utilizando Gradle:
-
-```bash
-./gradlew installDebug
 ```
 
 ---
@@ -298,28 +275,15 @@ A interface foi construída com Jetpack Compose seguindo uma abordagem moderna e
 
 O projeto possui:
 
-* Componentes reutilizáveis
-* Estrutura modular
-* Navegação desacoplada
-* Tema customizado
-* Material Design 3
-* Responsividade para diferentes telas
-
----
-
-# 📌 Melhorias futuras
-
-* Upload de imagens
-* Status online/offline
-* Indicador de digitação
-* Mensagens de áudio
-* Dark mode completo
-* Testes automatizados
-* Paginação de mensagens
+- Componentes reutilizáveis
+- Estrutura modular
+- Navegação desacoplada
+- Tema customizado
+- Material Design 3
+- Responsividade para diferentes telas
 
 ---
 
 # 📄 Licença
 
 Projeto desenvolvido para fins acadêmicos e de estudo.
-
