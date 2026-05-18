@@ -198,7 +198,7 @@ Em seguida rode a aplicação.
 ## 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
+git clone https://github.com/BeatrizBortolai/wchat-integracao.git
 ```
 
 ---
