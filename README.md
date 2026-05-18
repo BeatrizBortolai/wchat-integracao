@@ -97,13 +97,13 @@ app/src/main/java/com/example/wchat
 
 * Criação e gerenciamento de grupos
 * Segmentação de usuários
-* Seleção de destinatários
 
 ## 🔔 Notificações
 
 * Push notifications com Firebase Cloud Messaging
 * Criação de notificações
 * Cards personalizados
+* Seleção de destinatários
 
 ## 👤 Perfil
 
@@ -115,18 +115,18 @@ app/src/main/java/com/example/wchat
 
 # 📂 Principais telas
 
-| Tela                    | Descrição                  |
-| ----------------------- | -------------------------- |
-| Login                   | Autenticação do usuário    |
-| Cadastro                | Registro de novos usuários |
-| Conversas               | Lista de chats disponíveis |
-| ChatScreen              | Conversa em tempo real     |
-| Grupos                  | Gerenciamento de grupos    |
-| Segmentos               | Organização de usuários    |
-| Perfil                  | Informações do usuário     |
-| EditarPerfil            | Atualização de perfil      |
-| CriarNotificacao        | Criação de notificações    |
-| SelecionarDestinatarios | Seleção de usuários        |
+| Tela                    | Descrição                                  |
+| ----------------------- | ------------------------------------------ |
+| Login                   | Autenticação do usuário                    |
+| Cadastro                | Registro de novos usuários                 |
+| Conversas               | Lista de chats disponíveis                 |
+| ChatScreen              | Conversa em tempo real                     |
+| Grupos                  | Gerenciamento de grupos                    |
+| Segmentos               | Organização de usuários                    |
+| Perfil                  | Informações do usuário                     |
+| EditarPerfil            | Atualização de perfil                      |
+| CriarNotificacao        | Criação de notificações                    |
+| SelecionarDestinatarios | Seleção de usuários, grupos e/ou segmentos |
 
 ---
 
